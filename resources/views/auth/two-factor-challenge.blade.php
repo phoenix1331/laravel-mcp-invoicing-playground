@@ -18,7 +18,7 @@
 
         <x-form.button>Log in</x-form.button>
 
-        <button type="button" @click="recovery = !recovery" class="w-full text-center text-sm font-medium text-[#635bff] hover:text-[#5147e5]">
+        <button type="button" @click="recovery = !recovery" class="w-full text-center text-sm font-medium text-[#f87171] hover:text-[#ef4444]">
             <span x-show="!recovery">Use a recovery code instead</span>
             <span x-show="recovery" x-cloak>Use an authentication code instead</span>
         </button>

@@ -14,6 +14,6 @@
 
     <p class="mt-6 text-center text-sm text-[#8792a2]">
         Already have an account?
-        <a href="{{ route('login') }}" class="font-medium text-[#635bff] hover:text-[#5147e5]">Log in</a>
+        <a href="{{ route('login') }}" class="font-medium text-[#f87171] hover:text-[#ef4444]">Log in</a>
     </p>
 </x-auth-layout>

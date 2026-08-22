@@ -7,7 +7,7 @@
         name="{{ $name }}"
         type="{{ $type }}"
         {{ $attributes->merge([
-            'class' => 'block w-full rounded-md border border-[#e3e8ee] px-3 py-2 text-sm text-[#0a2540] shadow-sm focus:border-[#635bff] focus:outline-none focus:ring-1 focus:ring-[#635bff]',
+            'class' => 'block w-full rounded-md border border-[#e3e8ee] px-3 py-2 text-sm text-[#0a2540] shadow-sm focus:border-[#f87171] focus:outline-none focus:ring-1 focus:ring-[#f87171]',
         ]) }}
     >
     @error($name)

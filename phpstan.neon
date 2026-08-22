@@ -6,3 +6,10 @@ parameters:
         - app
 
     level: 8
+
+    # Larastan 3.10 does not infer enum casts declared via Laravel 13's method-based
+    # casts() (only the legacy protected $casts array property), so it treats enum-typed
+    # attributes as their raw DB string type and flags correct enum comparisons as dead code.
+    ignoreErrors:
+        - identifier: booleanAnd.alwaysFalse
+        - identifier: identical.alwaysFalse

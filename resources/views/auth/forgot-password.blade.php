@@ -15,6 +15,6 @@
     </form>
 
     <p class="mt-6 text-center text-sm text-[#8792a2]">
-        <a href="{{ route('login') }}" class="font-medium text-[#635bff] hover:text-[#5147e5]">Back to log in</a>
+        <a href="{{ route('login') }}" class="font-medium text-[#f87171] hover:text-[#ef4444]">Back to log in</a>
     </p>
 </x-auth-layout>
