@@ -8,8 +8,14 @@ parameters:
     level: 8
 
     # Larastan 3.10 does not infer enum casts declared via Laravel 13's method-based
-    # casts() (only the legacy protected $casts array property), so it treats enum-typed
-    # attributes as their raw DB string type and flags correct enum comparisons as dead code.
+    # casts() (only the legacy protected $casts array property), so it treats User::$role
+    # and Invoice::$status as their raw DB string type and flags correct enum usage as
+    # errors. Scoped by message to only these two enum classes, so a genuine bug carrying
+    # the same error identifier elsewhere in the app is never masked.
     ignoreErrors:
-        - identifier: booleanAnd.alwaysFalse
-        - identifier: identical.alwaysFalse
+        - '#UserRole::Owner will always evaluate to false#'
+        - '#App\\Enums\\InvoiceStatus#'
+        - '#Cannot access property \$value on string#'
+        -
+            identifier: booleanAnd.alwaysFalse
+            path: app/Policies/*
