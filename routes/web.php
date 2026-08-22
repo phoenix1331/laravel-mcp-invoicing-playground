@@ -15,7 +15,7 @@ Route::middleware('auth')->scopeBindings()->group(function () {
 
     Route::resource('customers', CustomerController::class);
 
-    Route::resource('invoices', InvoiceController::class)->only(['show', 'create', 'store', 'edit', 'update']);
+    Route::resource('invoices', InvoiceController::class)->only(['index', 'show', 'create', 'store', 'edit', 'update']);
 
     Route::post('/invoices/{invoice}/send', [InvoiceController::class, 'send'])->name('invoices.send');
     Route::post('/invoices/{invoice}/mark-paid', [InvoiceController::class, 'markPaid'])->name('invoices.mark-paid');

@@ -13,12 +13,27 @@ use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\User;
 use DomainException;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class InvoiceController extends Controller
 {
+    /**
+     * Display a listing of the resource.
+     */
+    public function index(Request $request): View
+    {
+        $this->authorize('viewAny', Invoice::class);
+
+        $invoices = $this->filteredInvoices($request);
+        $customers = Customer::query()->orderBy('name')->get();
+
+        return view('invoices.index', ['invoices' => $invoices, 'customers' => $customers]);
+    }
+
     /**
      * Display the specified resource.
      */
@@ -159,5 +174,35 @@ class InvoiceController extends Controller
                 'position' => $position,
             ]);
         }
+    }
+
+    /**
+     * @return LengthAwarePaginator<int, Invoice>
+     */
+    private function filteredInvoices(Request $request): LengthAwarePaginator
+    {
+        $sortableColumns = ['number', 'issue_date', 'due_date', 'total', 'status'];
+        $sort = in_array($request->string('sort')->value(), $sortableColumns, true)
+            ? $request->string('sort')->value()
+            : 'issue_date';
+        $direction = $request->string('direction')->value() === 'asc' ? 'asc' : 'desc';
+
+        return Invoice::query()
+            ->with('customer')
+            ->when($request->filled('status'), fn ($query) => $query->where('status', $request->string('status')->value()))
+            ->when($request->filled('customer_id'), fn ($query) => $query->where('customer_id', $request->integer('customer_id')))
+            ->when($request->filled('from'), fn ($query) => $query->whereDate('issue_date', '>=', $request->date('from')))
+            ->when($request->filled('to'), fn ($query) => $query->whereDate('issue_date', '<=', $request->date('to')))
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $search = $request->string('search')->value();
+
+                $query->where(function ($query) use ($search) {
+                    $query->where('number', 'like', "%{$search}%")
+                        ->orWhereHas('customer', fn ($query) => $query->where('name', 'like', "%{$search}%"));
+                });
+            })
+            ->orderBy($sort, $direction)
+            ->paginate(20)
+            ->withQueryString();
     }
 }
