@@ -27,11 +27,11 @@ class OrganisationSeeder extends Seeder
             ['name' => 'Globex Inc'],
         );
 
-        $this->createUser($acme, 'Acme Owner', 'owner@acme.test', UserRole::Owner);
-        $this->createUser($acme, 'Acme Member', 'member@acme.test', UserRole::Member);
-        $this->createUser($acme, 'Acme Viewer', 'viewer@acme.test', UserRole::Viewer);
+        $this->createUser($acme, 'Acme Owner', 'user1@email.com', UserRole::Owner);
+        $this->createUser($acme, 'Acme Member', 'user2@email.com', UserRole::Member);
+        $this->createUser($acme, 'Acme Viewer', 'user3@email.com', UserRole::Viewer);
 
-        $this->createUser($globex, 'Globex Owner', 'owner@globex.test', UserRole::Owner);
+        $this->createUser($globex, 'Globex Owner', 'user4@email.com', UserRole::Owner);
     }
 
     private function createUser(Organisation $organisation, string $name, string $email, UserRole $role): void

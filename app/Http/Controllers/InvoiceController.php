@@ -5,18 +5,32 @@ namespace App\Http\Controllers;
 use App\Actions\AllocateInvoiceNumber;
 use App\Actions\CalculateLineTotal;
 use App\Actions\RecalculateInvoiceTotals;
+use App\Actions\TransitionInvoiceStatus;
 use App\Enums\InvoiceStatus;
 use App\Http\Requests\StoreInvoiceRequest;
 use App\Http\Requests\UpdateInvoiceRequest;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\User;
+use DomainException;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 
 class InvoiceController extends Controller
 {
+    /**
+     * Display the specified resource.
+     */
+    public function show(Invoice $invoice): View
+    {
+        $this->authorize('view', $invoice);
+
+        $invoice->load(['lines', 'customer', 'createdBy']);
+
+        return view('invoices.show', ['invoice' => $invoice]);
+    }
+
     /**
      * Show the form for creating a new resource.
      */
@@ -86,6 +100,49 @@ class InvoiceController extends Controller
         app(RecalculateInvoiceTotals::class)($invoice);
 
         return redirect()->route('invoices.edit', $invoice);
+    }
+
+    /**
+     * Transition the invoice from draft to sent.
+     */
+    public function send(Invoice $invoice): RedirectResponse
+    {
+        $this->authorize('update', $invoice);
+
+        return $this->applyTransition($invoice, fn () => app(TransitionInvoiceStatus::class)->send($invoice));
+    }
+
+    /**
+     * Transition the invoice from sent to paid.
+     */
+    public function markPaid(Invoice $invoice): RedirectResponse
+    {
+        $this->authorize('update', $invoice);
+
+        return $this->applyTransition($invoice, fn () => app(TransitionInvoiceStatus::class)->markPaid($invoice));
+    }
+
+    /**
+     * Transition the invoice from sent to void.
+     */
+    public function void(Invoice $invoice): RedirectResponse
+    {
+        $this->authorize('update', $invoice);
+
+        return $this->applyTransition($invoice, fn () => app(TransitionInvoiceStatus::class)->void($invoice));
+    }
+
+    private function applyTransition(Invoice $invoice, callable $transition): RedirectResponse
+    {
+        try {
+            $transition();
+        } catch (DomainException $exception) {
+            return redirect()
+                ->route('invoices.show', $invoice)
+                ->withErrors(['status' => $exception->getMessage()]);
+        }
+
+        return redirect()->route('invoices.show', $invoice);
     }
 
     /**
