@@ -35,5 +35,7 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <env name="LARAVEL_PDF_CHROME_PATH" value="/usr/bin/chromium"/>
+        <env name="LARAVEL_PDF_NO_SANDBOX" value="true"/>
     </php>
 </phpunit>

@@ -19,3 +19,10 @@ parameters:
         -
             identifier: booleanAnd.alwaysFalse
             path: app/Policies/*
+        # Larastan contradicts itself on Invoice::$updated_at?->timestamp: flags the
+        # nullsafe as unnecessary (never null) here, but flags the non-nullsafe form
+        # as a possible null-property access elsewhere. Keeping the defensively
+        # correct nullsafe form and suppressing this specific false positive.
+        -
+            identifier: nullsafe.neverNull
+            path: app/Actions/GenerateInvoicePdf.php

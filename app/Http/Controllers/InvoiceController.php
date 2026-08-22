@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Actions\AllocateInvoiceNumber;
 use App\Actions\CalculateLineTotal;
 use App\Actions\DeleteInvoice;
+use App\Actions\GenerateInvoicePdf;
 use App\Actions\RecalculateInvoiceTotals;
 use App\Actions\TransitionInvoiceStatus;
 use App\Enums\InvoiceStatus;
@@ -19,6 +20,8 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class InvoiceController extends Controller
 {
@@ -161,6 +164,18 @@ class InvoiceController extends Controller
         app(DeleteInvoice::class)($invoice);
 
         return redirect()->route('invoices.index');
+    }
+
+    /**
+     * Stream the invoice PDF as a download.
+     */
+    public function downloadPdf(Invoice $invoice): StreamedResponse
+    {
+        $this->authorize('view', $invoice);
+
+        $path = app(GenerateInvoicePdf::class)($invoice);
+
+        return Storage::disk('local')->download($path, "{$invoice->number}.pdf");
     }
 
     private function applyTransition(Invoice $invoice, callable $transition): RedirectResponse

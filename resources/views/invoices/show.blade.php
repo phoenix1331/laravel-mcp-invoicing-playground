@@ -6,14 +6,12 @@
         </div>
 
         <div class="flex gap-3">
-            <button
-                type="button"
-                disabled
-                title="PDF generation lands in a later phase"
-                class="cursor-not-allowed rounded-md border border-[#e3e8ee] bg-[#f6f9fc] px-4 py-2 text-sm font-medium text-[#8792a2]"
+            <a
+                href="{{ route('invoices.pdf', $invoice) }}"
+                class="rounded-md border border-[#e3e8ee] bg-white px-4 py-2 text-sm font-medium text-[#0a2540] hover:bg-[#f6f9fc]"
             >
                 Download PDF
-            </button>
+            </a>
 
             @if ($invoice->status->value === 'draft')
                 <a
