@@ -1,0 +1,106 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: lint & format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      - name: cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+
+      - name: install composer dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: composer validate
+        run: composer validate --strict
+
+      - name: pint
+        run: ./vendor/bin/pint --test
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: install npm dependencies
+        run: npm ci
+
+      - name: prettier
+        run: npm run lint
+
+  static-analysis:
+    name: static analysis
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      - name: cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+
+      - name: install composer dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: larastan
+        run: ./vendor/bin/phpstan analyse --level=8
+
+  tests:
+    name: tests
+    runs-on: ubuntu-latest
+    needs: lint
+    strategy:
+      matrix:
+        php: ['8.3', '8.4']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: pdo_sqlite
+          coverage: none
+
+      - name: cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ matrix.php }}-${{ hashFiles('composer.lock') }}
+
+      - name: install composer dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: copy env
+        run: cp .env.example .env
+
+      - name: generate app key
+        run: php artisan key:generate
+
+      - name: run pest
+        run: ./vendor/bin/pest
