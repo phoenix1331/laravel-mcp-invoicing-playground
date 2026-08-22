@@ -4,7 +4,9 @@ namespace App\Models;
 
 use App\Enums\InvoiceStatus;
 use App\Models\Concerns\BelongsToOrganisation;
+use Database\Factories\InvoiceFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -26,7 +28,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 ])]
 class Invoice extends Model
 {
-    use BelongsToOrganisation;
+    /** @use HasFactory<InvoiceFactory> */
+    use BelongsToOrganisation, HasFactory;
 
     /**
      * @return BelongsTo<Customer, $this>

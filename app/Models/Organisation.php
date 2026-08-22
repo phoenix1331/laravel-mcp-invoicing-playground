@@ -2,13 +2,18 @@
 
 namespace App\Models;
 
+use Database\Factories\OrganisationFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable(['name', 'slug', 'address', 'vat_number', 'logo_path'])]
 class Organisation extends Model
 {
+    /** @use HasFactory<OrganisationFactory> */
+    use HasFactory;
+
     /**
      * @return HasMany<User, $this>
      */
