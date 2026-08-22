@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "303564b9a7a1686c08539f0a38210462",
+    "content-hash": "76caa855ebb426ce6484bf93c444c41d",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -9218,6 +9218,77 @@
                 "source": "https://github.com/phar-io/version/tree/3.2.1"
             },
             "time": "2022-02-21T01:04:05+00:00"
+        },
+        {
+            "name": "phoenix1331/laravel-auth-audit",
+            "version": "v2.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/phoenix1331/laravel-auth-audit.git",
+                "reference": "be393502bca4dae88610b32a2a790966072ee425"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/phoenix1331/laravel-auth-audit/zipball/be393502bca4dae88610b32a2a790966072ee425",
+                "reference": "be393502bca4dae88610b32a2a790966072ee425",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/console": "^10.0|^11.0|^12.0|^13.0",
+                "illuminate/routing": "^10.0|^11.0|^12.0|^13.0",
+                "illuminate/support": "^10.0|^11.0|^12.0|^13.0",
+                "nikic/php-parser": "^5.0",
+                "php": "^8.2"
+            },
+            "require-dev": {
+                "laravel/pint": "^1.0",
+                "orchestra/testbench": "^11.0",
+                "pestphp/pest": "^5.0",
+                "pestphp/pest-plugin-laravel": "^5.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Phoenix1331\\LaravelAuthAudit\\LaravelAuthAuditServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Phoenix1331\\LaravelAuthAudit\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Darren Williams",
+                    "homepage": "https://github.com/phoenix1331"
+                }
+            ],
+            "description": "Authorisation coverage reporting for Laravel applications. Statically scans routes, controllers, Form Requests, and Policies to report what is and is not protected.",
+            "homepage": "https://github.com/phoenix1331/laravel-auth-audit",
+            "keywords": [
+                "Audit",
+                "access-control",
+                "authorisation",
+                "authorization",
+                "baseline",
+                "idor",
+                "idor-detection",
+                "laravel",
+                "owasp",
+                "security",
+                "static-analysis"
+            ],
+            "support": {
+                "issues": "https://github.com/phoenix1331/laravel-auth-audit/issues",
+                "source": "https://github.com/phoenix1331/laravel-auth-audit"
+            },
+            "time": "2026-08-19T22:04:15+00:00"
         },
         {
             "name": "phpstan/phpstan",
