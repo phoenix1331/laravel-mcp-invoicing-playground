@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\AllocateInvoiceNumber;
 use App\Actions\CalculateLineTotal;
+use App\Actions\DeleteInvoice;
 use App\Actions\RecalculateInvoiceTotals;
 use App\Actions\TransitionInvoiceStatus;
 use App\Enums\InvoiceStatus;
@@ -145,6 +146,21 @@ class InvoiceController extends Controller
         $this->authorize('update', $invoice);
 
         return $this->applyTransition($invoice, fn () => app(TransitionInvoiceStatus::class)->void($invoice));
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * Only draft invoices are actually deleted; anything else is voided
+     * instead, per brief §4/§7 (see App\Actions\DeleteInvoice).
+     */
+    public function destroy(Invoice $invoice): RedirectResponse
+    {
+        $this->authorize('delete', $invoice);
+
+        app(DeleteInvoice::class)($invoice);
+
+        return redirect()->route('invoices.index');
     }
 
     private function applyTransition(Invoice $invoice, callable $transition): RedirectResponse

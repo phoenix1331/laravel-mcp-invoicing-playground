@@ -37,6 +37,16 @@
                     Edit
                 </a>
 
+                @can('delete', $invoice)
+                    <form method="POST" action="{{ route('invoices.destroy', $invoice) }}" onsubmit="return confirm('Delete this draft invoice?');">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="rounded-md border border-[#df1b41] px-4 py-2 text-sm font-medium text-[#df1b41] hover:bg-[#df1b41] hover:text-white">
+                            Delete
+                        </button>
+                    </form>
+                @endcan
+
                 <form method="POST" action="{{ route('invoices.send', $invoice) }}">
                     @csrf
                     <button type="submit" class="rounded-md bg-[#f87171] px-4 py-2 text-sm font-medium text-white hover:bg-[#ef4444]">
