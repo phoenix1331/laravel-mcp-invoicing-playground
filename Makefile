@@ -1,6 +1,6 @@
 .PHONY: help up down build shell migrate seed test logs fresh pint stan lint-js format-js validate artisan composer npm dusk dusk-setup dusk-headed
 
-EXEC = docker compose exec -u $(shell id -u):$(shell id -g) app
+EXEC = docker compose exec -u $(shell id -u):$(shell id -g) -e HOME=/tmp app
 
 help: ## show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "%-10s %s\n", $$1, $$2}'

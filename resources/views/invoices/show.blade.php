@@ -1,21 +1,7 @@
 <x-layout :title="$invoice->number">
-    @php
-        $statusColors = [
-            'draft' => 'bg-slate-100 text-slate-700',
-            'sent' => 'bg-indigo-50 text-indigo-700',
-            'paid' => 'bg-emerald-50 text-emerald-700',
-            'void' => 'bg-amber-50 text-amber-700',
-        ];
-    @endphp
-
     <div class="flex items-start justify-between">
         <div>
-            <div class="flex items-center gap-3">
-                <h1 class="text-2xl font-semibold text-[#0a2540]">{{ $invoice->number }}</h1>
-                <span class="rounded-full px-3 py-1 text-xs font-medium {{ $statusColors[$invoice->status->value] }}">
-                    {{ ucfirst($invoice->status->value) }}
-                </span>
-            </div>
+            <h1 class="text-2xl font-semibold text-[#0a2540]">{{ $invoice->number }}</h1>
             <p class="mt-1 text-sm text-[#425466]">{{ $invoice->customer->name }}</p>
         </div>
 
@@ -79,52 +65,7 @@
 
     <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div class="lg:col-span-2">
-            <div class="overflow-hidden rounded-lg bg-white shadow-[0_1px_3px_rgba(10,37,64,0.08)] ring-1 ring-slate-900/5">
-                <table class="min-w-full divide-y divide-[#e3e8ee]">
-                    <thead>
-                        <tr class="text-left text-xs font-medium uppercase tracking-wide text-[#8792a2]">
-                            <th class="px-4 py-3">Description</th>
-                            <th class="px-4 py-3 text-right">Qty</th>
-                            <th class="px-4 py-3 text-right">Unit price</th>
-                            <th class="px-4 py-3 text-right">Line total</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-[#e3e8ee]">
-                        @foreach ($invoice->lines as $line)
-                            <tr>
-                                <td class="px-4 py-3 text-sm text-[#0a2540]">{{ $line->description }}</td>
-                                <td class="px-4 py-3 text-right text-sm tabular-nums text-[#425466]">{{ $line->quantity }}</td>
-                                <td class="px-4 py-3 text-right text-sm tabular-nums text-[#425466]">£{{ number_format($line->unit_price, 2) }}</td>
-                                <td class="px-4 py-3 text-right text-sm tabular-nums text-[#0a2540]">£{{ number_format($line->line_total, 2) }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-
-                <div class="border-t border-[#e3e8ee] bg-[#f6f9fc] px-4 py-3">
-                    <dl class="space-y-1 text-sm">
-                        <div class="flex justify-between">
-                            <dt class="text-[#425466]">Subtotal</dt>
-                            <dd class="tabular-nums text-[#0a2540]">£{{ number_format($invoice->subtotal, 2) }}</dd>
-                        </div>
-                        <div class="flex justify-between">
-                            <dt class="text-[#425466]">Tax ({{ $invoice->tax_rate }}%)</dt>
-                            <dd class="tabular-nums text-[#0a2540]">£{{ number_format($invoice->tax_total, 2) }}</dd>
-                        </div>
-                        <div class="flex justify-between font-semibold">
-                            <dt class="text-[#0a2540]">Total</dt>
-                            <dd class="tabular-nums text-[#0a2540]">£{{ number_format($invoice->total, 2) }}</dd>
-                        </div>
-                    </dl>
-                </div>
-            </div>
-
-            @if ($invoice->notes)
-                <div class="mt-6 rounded-lg bg-white p-6 shadow-[0_1px_3px_rgba(10,37,64,0.08)] ring-1 ring-slate-900/5">
-                    <h2 class="text-sm font-medium text-[#8792a2]">Notes</h2>
-                    <p class="mt-2 text-sm text-[#0a2540]">{{ $invoice->notes }}</p>
-                </div>
-            @endif
+            @include('invoices._document', ['invoice' => $invoice])
         </div>
 
         <div>

@@ -22,6 +22,7 @@
     },
     "dependencies": {
         "@fontsource/inter": "^5.3.0",
-        "alpinejs": "^3.16.2"
+        "alpinejs": "^3.16.2",
+        "puppeteer": "^25.8.0"
     }
 }

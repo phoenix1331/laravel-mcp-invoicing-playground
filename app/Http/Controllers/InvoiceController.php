@@ -42,7 +42,7 @@ class InvoiceController extends Controller
     {
         $this->authorize('view', $invoice);
 
-        $invoice->load(['lines', 'customer', 'createdBy']);
+        $invoice->load(['lines', 'customer', 'createdBy', 'organisation']);
 
         return view('invoices.show', ['invoice' => $invoice]);
     }
