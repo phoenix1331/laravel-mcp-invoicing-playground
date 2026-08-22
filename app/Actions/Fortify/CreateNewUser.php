@@ -2,6 +2,8 @@
 
 namespace App\Actions\Fortify;
 
+use App\Enums\UserRole;
+use App\Models\Organisation;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -34,10 +36,17 @@ class CreateNewUser implements CreatesNewUsers
             'password' => $this->passwordRules(),
         ])->validate();
 
+        $organisation = Organisation::firstOrCreate(
+            ['slug' => 'default'],
+            ['name' => 'Default Organisation'],
+        );
+
         return User::create([
+            'organisation_id' => $organisation->id,
             'name' => $input['name'],
             'email' => $input['email'],
             'password' => Hash::make($input['password']),
+            'role' => UserRole::Owner,
         ]);
     }
 }

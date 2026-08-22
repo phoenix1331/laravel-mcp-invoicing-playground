@@ -11,7 +11,7 @@
     </button>
 
     <div class="flex items-center gap-2 text-sm font-medium text-[#0a2540]">
-        <span>{{ optional(optional(auth()->user())->organization)->name ?? 'Organization' }}</span>
+        <span>{{ optional(optional(auth()->user())->organisation)->name ?? 'Organisation' }}</span>
     </div>
 
     <div class="flex items-center gap-3">
