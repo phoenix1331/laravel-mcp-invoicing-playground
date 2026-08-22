@@ -34,7 +34,7 @@ pint: ## run pint --test
 	@docker compose exec app ./vendor/bin/pint --test
 
 stan: ## run larastan level 8
-	@docker compose exec app ./vendor/bin/phpstan analyse
+	@docker compose exec app ./vendor/bin/phpstan analyse --memory-limit=512M
 
 lint-js: ## check js/css formatting with prettier
 	@docker compose exec app npm run lint
