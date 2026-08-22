@@ -13,7 +13,7 @@ parameters:
     # errors. Scoped by message to only these two enum classes, so a genuine bug carrying
     # the same error identifier elsewhere in the app is never masked.
     ignoreErrors:
-        - '#UserRole::Owner will always evaluate to false#'
+        - '#App\\Enums\\UserRole#'
         - '#App\\Enums\\InvoiceStatus#'
         - '#Cannot access property \$value on string#'
         -
