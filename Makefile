@@ -1,4 +1,4 @@
-.PHONY: help up down build shell migrate seed test logs fresh pint stan lint-js format-js validate
+.PHONY: help up down build shell migrate seed test logs fresh pint stan lint-js format-js validate artisan composer npm
 
 EXEC = docker compose exec -u $(shell id -u):$(shell id -g) app
 
@@ -46,3 +46,12 @@ format-js: ## fix js/css formatting with prettier
 
 validate: ## composer validate --strict
 	@$(EXEC) composer validate --strict
+
+artisan: ## run any artisan command, e.g. make artisan cmd="make:seeder Foo"
+	@$(EXEC) php artisan $(cmd)
+
+composer: ## run any composer command, e.g. make composer cmd="require foo/bar"
+	@$(EXEC) composer $(cmd)
+
+npm: ## run any npm command, e.g. make npm cmd="install foo"
+	@$(EXEC) npm $(cmd)
