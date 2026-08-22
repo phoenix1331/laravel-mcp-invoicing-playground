@@ -1,4 +1,4 @@
-.PHONY: help up down build shell migrate seed test logs fresh pint stan lint-js format-js validate artisan composer npm
+.PHONY: help up down build shell migrate seed test logs fresh pint stan lint-js format-js validate artisan composer npm dusk dusk-setup dusk-headed
 
 EXEC = docker compose exec -u $(shell id -u):$(shell id -g) app
 
@@ -55,3 +55,12 @@ composer: ## run any composer command, e.g. make composer cmd="require foo/bar"
 
 npm: ## run any npm command, e.g. make npm cmd="install foo"
 	@$(EXEC) npm $(cmd)
+
+dusk-setup: ## migrate + seed the dedicated laravel_dusk database
+	@$(EXEC) sh -c "DB_DATABASE=laravel_dusk php artisan migrate:fresh --seed --force"
+
+dusk: ## run the dusk browser suite against the running app container
+	@$(EXEC) php artisan dusk
+
+dusk-headed: ## run dusk from the host with a visible browser window (needs host php, google-chrome, WSLg/X11)
+	@DUSK_HEADLESS_DISABLED=true DUSK_CHROME_BINARY=/usr/bin/google-chrome php artisan dusk

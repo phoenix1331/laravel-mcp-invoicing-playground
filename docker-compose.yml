@@ -3,20 +3,13 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    init: true
     ports:
       - "8000:8000"
     volumes:
       - .:/app
     environment:
       SERVER_NAME: ":8000"
-      DB_CONNECTION: mysql
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_DATABASE: laravel
-      DB_USERNAME: laravel
-      DB_PASSWORD: secret
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
     depends_on:
       mysql:
         condition: service_healthy

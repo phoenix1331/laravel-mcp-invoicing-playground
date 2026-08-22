@@ -104,3 +104,94 @@ jobs:
 
       - name: run pest
         run: ./vendor/bin/pest
+
+  e2e:
+    name: e2e (dusk)
+    runs-on: ubuntu-latest
+    needs: lint
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: laravel_dusk
+          MYSQL_USER: laravel
+          MYSQL_PASSWORD: secret
+          MYSQL_ROOT_PASSWORD: secret
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -u root -psecret"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      - name: cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+
+      - name: install composer dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: install npm dependencies
+        run: npm ci
+
+      - name: build assets
+        run: npm run build
+
+      - name: copy dusk env
+        run: cp .env.dusk .env
+
+      - name: generate app key
+        run: php artisan key:generate
+
+      - name: migrate and seed
+        run: php artisan migrate:fresh --seed --force
+        env:
+          DB_HOST: 127.0.0.1
+
+      - name: cache chrome driver
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/puppeteer
+          key: chromedriver-${{ runner.os }}
+
+      - name: install chromedriver
+        run: php artisan dusk:chrome-driver --detect
+
+      - name: start the app server
+        run: php artisan serve --no-reload &
+        env:
+          DB_HOST: 127.0.0.1
+
+      - name: run dusk
+        run: php artisan dusk
+        env:
+          DB_HOST: 127.0.0.1
+
+      - name: upload screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dusk-screenshots
+          path: tests/Browser/screenshots
+
+      - name: upload console logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dusk-console
+          path: tests/Browser/console
