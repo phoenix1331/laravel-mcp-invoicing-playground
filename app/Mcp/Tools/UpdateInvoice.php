@@ -8,8 +8,10 @@ use App\Actions\CalculateLineTotal;
 use App\Actions\RecalculateInvoiceTotals;
 use App\Enums\InvoiceStatus;
 use App\Mcp\Concerns\AuthorizesToolAccess;
+use App\Mcp\Support\Idempotency;
 use App\Models\Customer;
 use App\Models\Invoice;
+use App\Models\User;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Support\Facades\DB;
 use Laravel\Mcp\Request;
@@ -45,6 +47,8 @@ class UpdateInvoice extends Tool
                 ]))
                 ->required()
                 ->description('The full set of line items; replaces all existing lines.'),
+            'idempotency_key' => $schema->string()
+                ->description('Optional. Reusing the same key within 24h replays the original result instead of repeating the update.'),
         ];
     }
 
@@ -71,6 +75,7 @@ class UpdateInvoice extends Tool
             'lines.*.description' => ['required', 'string', 'max:255'],
             'lines.*.quantity' => ['required', 'numeric', 'min:0.01'],
             'lines.*.unit_price' => ['required', 'numeric', 'min:0'],
+            'idempotency_key' => ['nullable', 'string', 'max:255'],
         ]);
 
         $invoice = Invoice::query()->find($data['invoice_id']);
@@ -93,8 +98,21 @@ class UpdateInvoice extends Tool
             return Response::error("No customer was found with id {$data['customer_id']}.");
         }
 
+        /** @var User $user */
+        $user = $request->user();
+
+        return app(Idempotency::class)->remember($this->name(), $data['idempotency_key'] ?? null, $user->organisation_id, function () use ($data, $invoice) {
+            return $this->applyUpdate($data, $invoice);
+        });
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function applyUpdate(array $data, Invoice $invoice): ResponseFactory
+    {
         DB::transaction(function () use ($data, $invoice) {
-            $invoice->update(collect($data)->except(['invoice_id', 'lines'])->all());
+            $invoice->update(collect($data)->except(['invoice_id', 'lines', 'idempotency_key'])->all());
 
             $invoice->lines()->delete();
 

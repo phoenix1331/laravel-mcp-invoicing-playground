@@ -63,3 +63,13 @@ it('denies an unauthenticated caller', function () {
     InvoicingServer::tool(DeleteCustomer::class, ['customer_id' => $customer->id])
         ->assertHasErrors(['Authentication is required']);
 });
+
+it('replays the original result on retry after the customer was already deleted', function () {
+    $user = User::factory()->create(['organisation_id' => $this->acme->id, 'role' => UserRole::Owner]);
+    $customer = Customer::factory()->create(['organisation_id' => $this->acme->id]);
+
+    $arguments = ['customer_id' => $customer->id, 'idempotency_key' => 'retry-delete-1'];
+
+    InvoicingServer::actingAs($user)->tool(DeleteCustomer::class, $arguments)->assertOk();
+    InvoicingServer::actingAs($user)->tool(DeleteCustomer::class, $arguments)->assertOk();
+});

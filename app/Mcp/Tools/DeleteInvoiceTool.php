@@ -7,7 +7,9 @@ namespace App\Mcp\Tools;
 use App\Actions\DeleteInvoice;
 use App\Enums\InvoiceStatus;
 use App\Mcp\Concerns\AuthorizesToolAccess;
+use App\Mcp\Support\Idempotency;
 use App\Models\Invoice;
+use App\Models\User;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
@@ -30,6 +32,8 @@ class DeleteInvoiceTool extends Tool
     {
         return [
             'invoice_id' => $schema->integer()->required()->description('The id of the invoice to delete.'),
+            'idempotency_key' => $schema->string()
+                ->description('Optional. Reusing the same key within 24h replays the original result, so a retry after the invoice was already deleted does not surface as an error.'),
         ];
     }
 
@@ -45,8 +49,25 @@ class DeleteInvoiceTool extends Tool
     {
         $data = $request->validate([
             'invoice_id' => ['required', 'integer'],
+            'idempotency_key' => ['nullable', 'string', 'max:255'],
         ]);
 
+        $user = $request->user();
+
+        if (! $user instanceof User) {
+            return Response::error('Authentication is required to use this tool.');
+        }
+
+        return app(Idempotency::class)->remember($this->name(), $data['idempotency_key'] ?? null, $user->organisation_id, function () use ($data, $request) {
+            return $this->deleteInvoice($data, $request);
+        });
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function deleteInvoice(array $data, Request $request): Response|ResponseFactory
+    {
         $invoice = Invoice::query()->find($data['invoice_id']);
 
         if (! $invoice instanceof Invoice) {

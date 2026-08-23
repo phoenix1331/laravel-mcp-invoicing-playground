@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Mcp\Servers\InvoicingServer;
 use App\Mcp\Tools\CreateInvoice;
 use App\Models\Customer;
+use App\Models\Invoice;
 use App\Models\Organisation;
 use App\Models\User;
 
@@ -68,4 +69,56 @@ it('cannot create an invoice for a cross-tenant customer', function () {
 it('denies an unauthenticated caller', function () {
     InvoicingServer::tool(CreateInvoice::class, createInvoiceArguments($this->customer->id))
         ->assertHasErrors(['Authentication is required']);
+});
+
+it('replays the same result instead of creating a second invoice when the idempotency key repeats', function () {
+    $user = User::factory()->create(['organisation_id' => $this->acme->id]);
+
+    $arguments = [...createInvoiceArguments($this->customer->id), 'idempotency_key' => 'retry-abc-123'];
+
+    $first = InvoicingServer::actingAs($user)->tool(CreateInvoice::class, $arguments);
+    $first->assertOk();
+
+    expect(Invoice::count())->toBe(1);
+
+    $second = InvoicingServer::actingAs($user)->tool(CreateInvoice::class, $arguments);
+    $second->assertOk();
+
+    expect(Invoice::count())->toBe(1);
+
+    $first->assertStructuredContent(fn ($json) => $json->where('id', Invoice::sole()->id)->etc());
+    $second->assertStructuredContent(fn ($json) => $json->where('id', Invoice::sole()->id)->etc());
+});
+
+it('creates a second invoice when no idempotency key is given', function () {
+    $user = User::factory()->create(['organisation_id' => $this->acme->id]);
+
+    InvoicingServer::actingAs($user)->tool(CreateInvoice::class, createInvoiceArguments($this->customer->id))->assertOk();
+    InvoicingServer::actingAs($user)->tool(CreateInvoice::class, createInvoiceArguments($this->customer->id))->assertOk();
+
+    expect(Invoice::count())->toBe(2);
+});
+
+it('creates a second invoice when the idempotency key differs', function () {
+    $user = User::factory()->create(['organisation_id' => $this->acme->id]);
+
+    InvoicingServer::actingAs($user)->tool(CreateInvoice::class, [...createInvoiceArguments($this->customer->id), 'idempotency_key' => 'key-one'])->assertOk();
+    InvoicingServer::actingAs($user)->tool(CreateInvoice::class, [...createInvoiceArguments($this->customer->id), 'idempotency_key' => 'key-two'])->assertOk();
+
+    expect(Invoice::count())->toBe(2);
+});
+
+it('does not replay a key across different organisations', function () {
+    $acmeUser = User::factory()->create(['organisation_id' => $this->acme->id]);
+    $globex = Organisation::factory()->create();
+    $globexUser = User::factory()->create(['organisation_id' => $globex->id]);
+    $globexCustomer = Customer::factory()->create(['organisation_id' => $globex->id]);
+
+    $key = 'shared-key';
+
+    InvoicingServer::actingAs($acmeUser)->tool(CreateInvoice::class, [...createInvoiceArguments($this->customer->id), 'idempotency_key' => $key])->assertOk();
+    InvoicingServer::actingAs($globexUser)->tool(CreateInvoice::class, [...createInvoiceArguments($globexCustomer->id), 'idempotency_key' => $key])->assertOk();
+
+    expect(Invoice::withoutGlobalScopes()->where('organisation_id', $this->acme->id)->count())->toBe(1)
+        ->and(Invoice::withoutGlobalScopes()->where('organisation_id', $globex->id)->count())->toBe(1);
 });

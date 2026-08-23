@@ -67,3 +67,18 @@ it('denies an unauthenticated caller', function () {
     InvoicingServer::tool(DeleteInvoiceTool::class, ['invoice_id' => $invoice->id])
         ->assertHasErrors(['Authentication is required']);
 });
+
+it('replays the original result on retry after the invoice was already deleted', function () {
+    $user = User::factory()->create(['organisation_id' => $this->acme->id, 'role' => UserRole::Owner]);
+    $invoice = Invoice::factory()->create(['organisation_id' => $this->acme->id, 'customer_id' => $this->customer->id, 'status' => InvoiceStatus::Draft]);
+
+    $arguments = ['invoice_id' => $invoice->id, 'idempotency_key' => 'retry-delete-1'];
+
+    InvoicingServer::actingAs($user)->tool(DeleteInvoiceTool::class, $arguments)
+        ->assertOk()
+        ->assertStructuredContent(fn ($json) => $json->where('status', 'deleted')->etc());
+
+    InvoicingServer::actingAs($user)->tool(DeleteInvoiceTool::class, $arguments)
+        ->assertOk()
+        ->assertStructuredContent(fn ($json) => $json->where('status', 'deleted')->etc());
+});

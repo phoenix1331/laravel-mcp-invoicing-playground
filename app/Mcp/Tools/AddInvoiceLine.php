@@ -8,7 +8,9 @@ use App\Actions\CalculateLineTotal;
 use App\Actions\RecalculateInvoiceTotals;
 use App\Enums\InvoiceStatus;
 use App\Mcp\Concerns\AuthorizesToolAccess;
+use App\Mcp\Support\Idempotency;
 use App\Models\Invoice;
+use App\Models\User;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
@@ -32,6 +34,8 @@ class AddInvoiceLine extends Tool
             'description' => $schema->string()->required(),
             'quantity' => $schema->number()->required(),
             'unit_price' => $schema->number()->required(),
+            'idempotency_key' => $schema->string()
+                ->description('Optional. Reusing the same key within 24h replays the original result instead of adding a second line.'),
         ];
     }
 
@@ -51,6 +55,7 @@ class AddInvoiceLine extends Tool
             'description' => ['required', 'string', 'max:255'],
             'quantity' => ['required', 'numeric', 'min:0.01'],
             'unit_price' => ['required', 'numeric', 'min:0'],
+            'idempotency_key' => ['nullable', 'string', 'max:255'],
         ]);
 
         $invoice = Invoice::query()->find($data['invoice_id']);
@@ -67,6 +72,19 @@ class AddInvoiceLine extends Tool
             return Response::error("Invoice {$invoice->number} is {$invoice->status->value} and can no longer be edited. Only draft invoices can have lines added.");
         }
 
+        /** @var User $user */
+        $user = $request->user();
+
+        return app(Idempotency::class)->remember($this->name(), $data['idempotency_key'] ?? null, $user->organisation_id, function () use ($data, $invoice) {
+            return $this->addLine($data, $invoice);
+        });
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function addLine(array $data, Invoice $invoice): ResponseFactory
+    {
         $nextPosition = (int) $invoice->lines()->max('position') + 1;
 
         $line = $invoice->lines()->create([

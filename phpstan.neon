@@ -42,6 +42,17 @@ parameters:
         -
             identifier: ternary.alwaysFalse
             path: app/Mcp/Tools/*
+        # Same root cause once more: when the misread status comparison sits in
+        # a private helper only ever called from inside a Closure passed to
+        # Idempotency::remember(), Larastan concludes the call is unreachable
+        # and reports the helper itself as unused, or that it never reaches its
+        # success-path return statement.
+        -
+            identifier: method.unused
+            path: app/Mcp/Tools/*
+        -
+            identifier: return.unusedType
+            path: app/Mcp/Tools/*
         -
             identifier: booleanAnd.alwaysFalse
             path: app/Policies/*

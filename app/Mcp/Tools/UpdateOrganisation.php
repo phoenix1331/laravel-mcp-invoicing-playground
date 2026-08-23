@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Mcp\Tools;
 
 use App\Mcp\Concerns\AuthorizesToolAccess;
+use App\Mcp\Support\Idempotency;
+use App\Models\Organisation;
 use App\Models\User;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
@@ -28,6 +30,8 @@ class UpdateOrganisation extends Tool
             'name' => $schema->string()->required(),
             'address' => $schema->string()->description('Optional postal address.'),
             'vat_number' => $schema->string()->description('Optional VAT number.'),
+            'idempotency_key' => $schema->string()
+                ->description('Optional. Reusing the same key within 24h replays the original result instead of repeating the update.'),
         ];
     }
 
@@ -58,9 +62,20 @@ class UpdateOrganisation extends Tool
             'name' => ['required', 'string', 'max:255'],
             'address' => ['nullable', 'string', 'max:255'],
             'vat_number' => ['nullable', 'string', 'max:255'],
+            'idempotency_key' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $organisation->update($data);
+        return app(Idempotency::class)->remember($this->name(), $data['idempotency_key'] ?? null, $organisation->id, function () use ($data, $organisation) {
+            return $this->updateOrganisation($data, $organisation);
+        });
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function updateOrganisation(array $data, Organisation $organisation): ResponseFactory
+    {
+        $organisation->update(collect($data)->except('idempotency_key')->all());
 
         $summary = Response::text("Updated organisation: {$organisation->name}.");
 

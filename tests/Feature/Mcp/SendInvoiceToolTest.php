@@ -69,3 +69,19 @@ it('denies an unauthenticated caller', function () {
     InvoicingServer::tool(SendInvoice::class, ['invoice_id' => $invoice->id])
         ->assertHasErrors(['Authentication is required']);
 });
+
+it('replays the original result instead of failing on retry after the invoice was already sent', function () {
+    $user = User::factory()->create(['organisation_id' => $this->acme->id]);
+    $invoice = Invoice::factory()->create(['organisation_id' => $this->acme->id, 'customer_id' => $this->customer->id, 'status' => InvoiceStatus::Draft]);
+    InvoiceLine::factory()->for($invoice)->create();
+
+    $arguments = ['invoice_id' => $invoice->id, 'idempotency_key' => 'retry-send-1'];
+
+    InvoicingServer::actingAs($user)->tool(SendInvoice::class, $arguments)
+        ->assertOk()
+        ->assertStructuredContent(fn ($json) => $json->where('status', 'sent')->etc());
+
+    InvoicingServer::actingAs($user)->tool(SendInvoice::class, $arguments)
+        ->assertOk()
+        ->assertStructuredContent(fn ($json) => $json->where('status', 'sent')->etc());
+});

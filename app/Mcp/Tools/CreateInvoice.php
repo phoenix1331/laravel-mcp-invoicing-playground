@@ -9,6 +9,7 @@ use App\Actions\CalculateLineTotal;
 use App\Actions\RecalculateInvoiceTotals;
 use App\Enums\InvoiceStatus;
 use App\Mcp\Concerns\AuthorizesToolAccess;
+use App\Mcp\Support\Idempotency;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\User;
@@ -46,6 +47,8 @@ class CreateInvoice extends Tool
                 ]))
                 ->required()
                 ->description('At least one line item.'),
+            'idempotency_key' => $schema->string()
+                ->description('Optional. Reusing the same key within 24h replays the original result instead of creating a second invoice - use this if a call might be retried.'),
         ];
     }
 
@@ -76,6 +79,7 @@ class CreateInvoice extends Tool
             'lines.*.description' => ['required', 'string', 'max:255'],
             'lines.*.quantity' => ['required', 'numeric', 'min:0.01'],
             'lines.*.unit_price' => ['required', 'numeric', 'min:0'],
+            'idempotency_key' => ['nullable', 'string', 'max:255'],
         ]);
 
         $customer = Customer::query()->find($data['customer_id']);
@@ -87,11 +91,21 @@ class CreateInvoice extends Tool
         /** @var User $user */
         $user = $request->user();
 
+        return app(Idempotency::class)->remember($this->name(), $data['idempotency_key'] ?? null, $user->organisation_id, function () use ($data, $user) {
+            return $this->createInvoice($data, $user);
+        });
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function createInvoice(array $data, User $user): ResponseFactory
+    {
         $invoice = DB::transaction(function () use ($data, $user) {
             $number = app(AllocateInvoiceNumber::class)($user->organisation()->firstOrFail());
 
             $invoice = Invoice::create([
-                ...collect($data)->except('lines')->all(),
+                ...collect($data)->except(['lines', 'idempotency_key'])->all(),
                 'organisation_id' => $user->organisation_id,
                 'created_by_user_id' => $user->id,
                 'number' => $number,

@@ -6,6 +6,7 @@ namespace App\Mcp\Tools;
 
 use App\Enums\UserRole;
 use App\Mcp\Concerns\AuthorizesToolAccess;
+use App\Mcp\Support\Idempotency;
 use App\Models\User;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Support\Str;
@@ -30,6 +31,8 @@ class InviteTeamMember extends Tool
             'name' => $schema->string()->required(),
             'email' => $schema->string()->required()->description('The new member\'s email address.'),
             'role' => $schema->string()->enum(UserRole::class)->required(),
+            'idempotency_key' => $schema->string()
+                ->description('Optional. Reusing the same key within 24h replays the original result, so a retry does not fail on the email already being taken by the member just created.'),
         ];
     }
 
@@ -48,14 +51,24 @@ class InviteTeamMember extends Tool
             return $error;
         }
 
+        /** @var User $user */
+        $user = $request->user();
+
+        $idempotencyKey = $request->get('idempotency_key');
+        $idempotencyKey = is_string($idempotencyKey) ? $idempotencyKey : null;
+
+        return app(Idempotency::class)->remember($this->name(), $idempotencyKey, $user->organisation_id, function () use ($request, $user) {
+            return $this->inviteMember($request, $user);
+        });
+    }
+
+    private function inviteMember(Request $request, User $user): ResponseFactory
+    {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'role' => ['required', 'string', 'in:'.implode(',', array_column(UserRole::cases(), 'value'))],
         ]);
-
-        /** @var User $user */
-        $user = $request->user();
 
         $temporaryPassword = Str::password(20);
 

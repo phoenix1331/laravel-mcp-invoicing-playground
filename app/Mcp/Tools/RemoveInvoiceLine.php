@@ -7,8 +7,10 @@ namespace App\Mcp\Tools;
 use App\Actions\RecalculateInvoiceTotals;
 use App\Enums\InvoiceStatus;
 use App\Mcp\Concerns\AuthorizesToolAccess;
+use App\Mcp\Support\Idempotency;
 use App\Models\Invoice;
 use App\Models\InvoiceLine;
+use App\Models\User;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
@@ -32,6 +34,8 @@ class RemoveInvoiceLine extends Tool
         return [
             'invoice_id' => $schema->integer()->required()->description('The id of the draft invoice.'),
             'line_id' => $schema->integer()->required()->description('The id of the line item to remove.'),
+            'idempotency_key' => $schema->string()
+                ->description('Optional. Reusing the same key within 24h replays the original result, so a retry after the line was already removed does not surface as an error.'),
         ];
     }
 
@@ -48,6 +52,7 @@ class RemoveInvoiceLine extends Tool
         $data = $request->validate([
             'invoice_id' => ['required', 'integer'],
             'line_id' => ['required', 'integer'],
+            'idempotency_key' => ['nullable', 'string', 'max:255'],
         ]);
 
         $invoice = Invoice::query()->find($data['invoice_id']);
@@ -60,6 +65,19 @@ class RemoveInvoiceLine extends Tool
             return $error;
         }
 
+        /** @var User $user */
+        $user = $request->user();
+
+        return app(Idempotency::class)->remember($this->name(), $data['idempotency_key'] ?? null, $user->organisation_id, function () use ($data, $invoice) {
+            return $this->removeLine($data, $invoice);
+        });
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function removeLine(array $data, Invoice $invoice): Response|ResponseFactory
+    {
         if ($invoice->status !== InvoiceStatus::Draft) {
             return Response::error("Invoice {$invoice->number} is {$invoice->status->value} and can no longer be edited. Only draft invoices can have lines removed.");
         }

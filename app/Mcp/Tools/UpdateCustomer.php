@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Mcp\Tools;
 
 use App\Mcp\Concerns\AuthorizesToolAccess;
+use App\Mcp\Support\Idempotency;
 use App\Models\Customer;
+use App\Models\User;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
@@ -29,6 +31,8 @@ class UpdateCustomer extends Tool
             'name' => $schema->string()->required(),
             'email' => $schema->string()->description('Optional email address.'),
             'address' => $schema->string()->description('Optional postal address.'),
+            'idempotency_key' => $schema->string()
+                ->description('Optional. Reusing the same key within 24h replays the original result instead of repeating the update.'),
         ];
     }
 
@@ -47,6 +51,7 @@ class UpdateCustomer extends Tool
             'name' => ['required', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
             'address' => ['nullable', 'string', 'max:255'],
+            'idempotency_key' => ['nullable', 'string', 'max:255'],
         ]);
 
         $customer = Customer::query()->find($data['customer_id']);
@@ -59,7 +64,20 @@ class UpdateCustomer extends Tool
             return $error;
         }
 
-        $customer->update(collect($data)->except('customer_id')->all());
+        /** @var User $user */
+        $user = $request->user();
+
+        return app(Idempotency::class)->remember($this->name(), $data['idempotency_key'] ?? null, $user->organisation_id, function () use ($data, $customer) {
+            return $this->updateCustomer($data, $customer);
+        });
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function updateCustomer(array $data, Customer $customer): ResponseFactory
+    {
+        $customer->update(collect($data)->except(['customer_id', 'idempotency_key'])->all());
 
         $summary = Response::text("Updated customer {$customer->name}.");
 

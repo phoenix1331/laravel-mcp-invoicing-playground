@@ -6,7 +6,9 @@ namespace App\Mcp\Tools;
 
 use App\Actions\TransitionInvoiceStatus;
 use App\Mcp\Concerns\AuthorizesToolAccess;
+use App\Mcp\Support\Idempotency;
 use App\Models\Invoice;
+use App\Models\User;
 use DomainException;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
@@ -30,6 +32,8 @@ class VoidInvoice extends Tool
     {
         return [
             'invoice_id' => $schema->integer()->required()->description('The id of the sent invoice to void.'),
+            'idempotency_key' => $schema->string()
+                ->description('Optional. Reusing the same key within 24h replays the original result, so a retry after the invoice was already voided does not surface as an error.'),
         ];
     }
 
@@ -45,6 +49,7 @@ class VoidInvoice extends Tool
     {
         $data = $request->validate([
             'invoice_id' => ['required', 'integer'],
+            'idempotency_key' => ['nullable', 'string', 'max:255'],
         ]);
 
         $invoice = Invoice::query()->find($data['invoice_id']);
@@ -57,6 +62,16 @@ class VoidInvoice extends Tool
             return $error;
         }
 
+        /** @var User $user */
+        $user = $request->user();
+
+        return app(Idempotency::class)->remember($this->name(), $data['idempotency_key'] ?? null, $user->organisation_id, function () use ($invoice) {
+            return $this->voidInvoice($invoice);
+        });
+    }
+
+    private function voidInvoice(Invoice $invoice): Response|ResponseFactory
+    {
         try {
             app(TransitionInvoiceStatus::class)->void($invoice);
         } catch (DomainException $exception) {

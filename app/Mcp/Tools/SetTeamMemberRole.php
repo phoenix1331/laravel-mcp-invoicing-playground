@@ -6,6 +6,7 @@ namespace App\Mcp\Tools;
 
 use App\Enums\UserRole;
 use App\Mcp\Concerns\AuthorizesToolAccess;
+use App\Mcp\Support\Idempotency;
 use App\Models\User;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
@@ -28,6 +29,8 @@ class SetTeamMemberRole extends Tool
         return [
             'user_id' => $schema->integer()->required()->description('The id of the team member.'),
             'role' => $schema->string()->enum(UserRole::class)->required(),
+            'idempotency_key' => $schema->string()
+                ->description('Optional. Reusing the same key within 24h replays the original result instead of repeating the change.'),
         ];
     }
 
@@ -44,6 +47,7 @@ class SetTeamMemberRole extends Tool
         $data = $request->validate([
             'user_id' => ['required', 'integer'],
             'role' => ['required', 'string', 'in:'.implode(',', array_column(UserRole::cases(), 'value'))],
+            'idempotency_key' => ['nullable', 'string', 'max:255'],
         ]);
 
         $member = User::query()->find($data['user_id']);
@@ -56,6 +60,19 @@ class SetTeamMemberRole extends Tool
             return $error;
         }
 
+        /** @var User $user */
+        $user = $request->user();
+
+        return app(Idempotency::class)->remember($this->name(), $data['idempotency_key'] ?? null, $user->organisation_id, function () use ($data, $member) {
+            return $this->setRole($data, $member);
+        });
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function setRole(array $data, User $member): ResponseFactory
+    {
         $member->role = $data['role'];
         $member->save();
 

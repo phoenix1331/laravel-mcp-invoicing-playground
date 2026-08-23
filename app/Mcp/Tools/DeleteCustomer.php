@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Mcp\Tools;
 
 use App\Mcp\Concerns\AuthorizesToolAccess;
+use App\Mcp\Support\Idempotency;
 use App\Models\Customer;
+use App\Models\User;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
@@ -28,6 +30,8 @@ class DeleteCustomer extends Tool
     {
         return [
             'customer_id' => $schema->integer()->required()->description('The id of the customer to delete.'),
+            'idempotency_key' => $schema->string()
+                ->description('Optional. Reusing the same key within 24h replays the original result, so a retry after the customer was already deleted does not surface as an error.'),
         ];
     }
 
@@ -42,8 +46,25 @@ class DeleteCustomer extends Tool
     {
         $data = $request->validate([
             'customer_id' => ['required', 'integer'],
+            'idempotency_key' => ['nullable', 'string', 'max:255'],
         ]);
 
+        $user = $request->user();
+
+        if (! $user instanceof User) {
+            return Response::error('Authentication is required to use this tool.');
+        }
+
+        return app(Idempotency::class)->remember($this->name(), $data['idempotency_key'] ?? null, $user->organisation_id, function () use ($data, $request) {
+            return $this->deleteCustomer($data, $request);
+        });
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function deleteCustomer(array $data, Request $request): Response|ResponseFactory
+    {
         $customer = Customer::query()->find($data['customer_id']);
 
         if (! $customer instanceof Customer) {
