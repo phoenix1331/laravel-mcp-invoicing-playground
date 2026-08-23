@@ -9,6 +9,7 @@ use App\Actions\CalculateLineTotal;
 use App\Actions\RecalculateInvoiceTotals;
 use App\Enums\InvoiceStatus;
 use App\Mcp\Concerns\AuthorizesToolAccess;
+use App\Mcp\Concerns\IsWriteTool;
 use App\Mcp\Support\Idempotency;
 use App\Models\Customer;
 use App\Models\Invoice;
@@ -24,7 +25,7 @@ use Laravel\Mcp\Server\Tools\Annotations\IsIdempotent;
 #[IsIdempotent(false)]
 class CreateInvoice extends Tool
 {
-    use AuthorizesToolAccess;
+    use AuthorizesToolAccess, IsWriteTool;
 
     protected string $name = 'invoices.create';
 

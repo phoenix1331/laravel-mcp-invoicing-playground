@@ -6,6 +6,7 @@ namespace App\Mcp\Tools;
 
 use App\Enums\UserRole;
 use App\Mcp\Concerns\AuthorizesToolAccess;
+use App\Mcp\Concerns\IsWriteTool;
 use App\Mcp\Support\Idempotency;
 use App\Models\User;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
@@ -18,7 +19,7 @@ use Laravel\Mcp\Server\Tools\Annotations\IsIdempotent;
 #[IsIdempotent]
 class SetTeamMemberRole extends Tool
 {
-    use AuthorizesToolAccess;
+    use AuthorizesToolAccess, IsWriteTool;
 
     protected string $name = 'team.set_role';
 

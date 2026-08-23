@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Mcp\Tools;
 
 use App\Mcp\Concerns\AuthorizesToolAccess;
+use App\Mcp\Concerns\IsWriteTool;
 use App\Mcp\Support\Idempotency;
 use App\Models\Customer;
 use App\Models\User;
@@ -18,7 +19,7 @@ use Laravel\Mcp\Server\Tools\Annotations\IsIdempotent;
 #[IsIdempotent(false)]
 class CreateCustomer extends Tool
 {
-    use AuthorizesToolAccess;
+    use AuthorizesToolAccess, IsWriteTool;
 
     protected string $name = 'customers.create';
 

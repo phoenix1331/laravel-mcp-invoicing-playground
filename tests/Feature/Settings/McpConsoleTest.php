@@ -62,3 +62,17 @@ it('directs claude desktop users to the connectors ui, not the config file', fun
         ->assertOk()
         ->assertSee(['Claude Desktop', 'Settings', 'Connectors', 'Add custom connector']);
 });
+
+it('hides write tools from the catalogue when the writes kill switch is off', function () {
+    config(['mcp.writes_enabled' => false]);
+
+    $organisation = Organisation::factory()->create();
+    $user = User::factory()->create(['organisation_id' => $organisation->id]);
+
+    $this->actingAs($user)
+        ->get(route('settings.mcp'))
+        ->assertOk()
+        ->assertDontSee('invoices.create')
+        ->assertDontSee('invoices.delete')
+        ->assertSee('invoices.list');
+});

@@ -7,6 +7,7 @@ namespace App\Mcp\Tools;
 use App\Actions\DeleteInvoice;
 use App\Enums\InvoiceStatus;
 use App\Mcp\Concerns\AuthorizesToolAccess;
+use App\Mcp\Concerns\IsWriteTool;
 use App\Mcp\Support\ConfirmationGate;
 use App\Mcp\Support\Idempotency;
 use App\Models\Invoice;
@@ -23,7 +24,7 @@ use Laravel\Mcp\Server\Tools\Annotations\IsIdempotent;
 #[IsIdempotent(false)]
 class DeleteInvoiceTool extends Tool
 {
-    use AuthorizesToolAccess;
+    use AuthorizesToolAccess, IsWriteTool;
 
     protected string $name = 'invoices.delete';
 
