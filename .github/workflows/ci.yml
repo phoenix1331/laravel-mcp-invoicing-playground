@@ -153,15 +153,13 @@ jobs:
         run: npm run build
 
       - name: copy dusk env
-        run: cp .env.dusk .env
+        run: cp .env.dusk.ci .env
 
       - name: generate app key
         run: php artisan key:generate
 
       - name: migrate and seed
         run: php artisan migrate:fresh --seed --force
-        env:
-          DB_HOST: 127.0.0.1
 
       - name: cache chrome driver
         uses: actions/cache@v4
@@ -174,13 +172,9 @@ jobs:
 
       - name: start the app server
         run: php artisan serve --no-reload &
-        env:
-          DB_HOST: 127.0.0.1
 
       - name: run dusk
         run: php artisan dusk
-        env:
-          DB_HOST: 127.0.0.1
 
       - name: upload screenshots on failure
         if: failure()
