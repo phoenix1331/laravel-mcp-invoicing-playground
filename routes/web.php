@@ -5,6 +5,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\InvoicePdfDownloadController;
+use App\Http\Controllers\McpAuditLogController;
 use App\Http\Controllers\McpConsoleController;
 use Illuminate\Support\Facades\Route;
 
@@ -33,4 +34,6 @@ Route::middleware('auth')->scopeBindings()->group(function () {
     Route::delete('/settings/tokens/{token}', [ApiTokenController::class, 'destroy'])->name('settings.tokens.destroy');
 
     Route::get('/settings/mcp', McpConsoleController::class)->name('settings.mcp');
+
+    Route::get('/audit/mcp', McpAuditLogController::class)->name('audit.mcp');
 });

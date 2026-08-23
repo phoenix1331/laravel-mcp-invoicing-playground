@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToOrganisation;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -21,15 +22,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 ])]
 class McpAuditLog extends Model
 {
-    public const UPDATED_AT = null;
+    use BelongsToOrganisation;
 
-    /**
-     * @return BelongsTo<Organisation, $this>
-     */
-    public function organisation(): BelongsTo
-    {
-        return $this->belongsTo(Organisation::class);
-    }
+    public const UPDATED_AT = null;
 
     /**
      * @return BelongsTo<User, $this>

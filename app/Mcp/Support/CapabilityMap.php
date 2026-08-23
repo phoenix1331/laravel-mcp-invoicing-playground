@@ -94,6 +94,10 @@ class CapabilityMap
         // capability an MCP client would call on itself.
         'settings.mcp' => 'UI introspection of this server catalogue; not applicable to an MCP client',
 
+        // MCP activity log: a human-facing view of the mcp.audit middleware's
+        // own output, not a capability an MCP client would call on itself.
+        'audit.mcp' => 'UI view of the MCP audit trail; not applicable to an MCP client',
+
         // The signed download link issued by invoices.download_pdf, not an
         // independent capability - it exists only because a tool cannot
         // itself stream a file response, already mapped to invoices.pdf.
