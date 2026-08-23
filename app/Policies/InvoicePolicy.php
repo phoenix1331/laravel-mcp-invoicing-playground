@@ -47,7 +47,7 @@ class InvoicePolicy
      * Determine whether the user can delete the invoice.
      *
      * Only Owners may delete, and only draft invoices are actually removed
-     * (DeleteInvoice voids anything else); see brief §4/§7.
+     * (DeleteInvoice voids anything else).
      */
     public function delete(User $user, Invoice $invoice): bool
     {

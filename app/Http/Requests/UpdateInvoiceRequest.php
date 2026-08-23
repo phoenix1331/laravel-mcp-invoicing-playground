@@ -10,7 +10,7 @@ use Illuminate\Foundation\Http\FormRequest;
 class UpdateInvoiceRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
+     * Determine if the user is authorised to make this request.
      */
     public function authorize(): bool
     {

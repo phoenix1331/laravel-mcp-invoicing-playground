@@ -26,3 +26,8 @@ parameters:
         -
             identifier: nullsafe.neverNull
             path: app/Actions/GenerateInvoicePdf.php
+        # AuthorizesToolAccess has no consumer until MCP tool classes exist.
+        # Remove this ignore once a tool uses the trait.
+        -
+            identifier: trait.unused
+            path: app/Mcp/Concerns/AuthorizesToolAccess.php

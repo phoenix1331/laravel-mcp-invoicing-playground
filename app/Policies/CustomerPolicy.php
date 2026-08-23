@@ -44,7 +44,7 @@ class CustomerPolicy
     /**
      * Determine whether the user can delete the customer.
      *
-     * Only permitted if the customer has no invoices, per brief §7.
+     * Only permitted if the customer has no invoices.
      */
     public function delete(User $user, Customer $customer): bool
     {

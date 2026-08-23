@@ -155,7 +155,7 @@ class InvoiceController extends Controller
      * Remove the specified resource from storage.
      *
      * Only draft invoices are actually deleted; anything else is voided
-     * instead, per brief §4/§7 (see App\Actions\DeleteInvoice).
+     * instead (see App\Actions\DeleteInvoice).
      */
     public function destroy(Invoice $invoice): RedirectResponse
     {
