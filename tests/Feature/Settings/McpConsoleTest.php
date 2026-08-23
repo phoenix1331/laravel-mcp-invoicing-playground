@@ -52,3 +52,13 @@ it('shows connection details for both transports', function () {
         ->assertOk()
         ->assertSee(['Remote transport', 'Local transport', 'mcp:start']);
 });
+
+it('directs claude desktop users to the connectors ui, not the config file', function () {
+    $organisation = Organisation::factory()->create();
+    $user = User::factory()->create(['organisation_id' => $organisation->id]);
+
+    $this->actingAs($user)
+        ->get(route('settings.mcp'))
+        ->assertOk()
+        ->assertSee(['Claude Desktop', 'Settings', 'Connectors', 'Add custom connector']);
+});

@@ -6,14 +6,28 @@ use App\Mcp\Resources\CustomerResource;
 use App\Mcp\Resources\InvoiceResource;
 use App\Mcp\Resources\InvoicingGuidelines;
 use App\Mcp\Resources\InvoicingSchema;
+use App\Mcp\Tools\AddInvoiceLine;
+use App\Mcp\Tools\CreateCustomer;
+use App\Mcp\Tools\CreateInvoice;
+use App\Mcp\Tools\DeleteCustomer;
+use App\Mcp\Tools\DeleteInvoiceTool;
 use App\Mcp\Tools\GetCustomer;
 use App\Mcp\Tools\GetInvoice;
 use App\Mcp\Tools\GetOrganisation;
+use App\Mcp\Tools\InviteTeamMember;
 use App\Mcp\Tools\ListCustomers;
 use App\Mcp\Tools\ListInvoices;
 use App\Mcp\Tools\ListTeam;
+use App\Mcp\Tools\MarkInvoicePaid;
+use App\Mcp\Tools\RemoveInvoiceLine;
 use App\Mcp\Tools\ReportsAging;
 use App\Mcp\Tools\ReportsSummary;
+use App\Mcp\Tools\SendInvoice;
+use App\Mcp\Tools\SetTeamMemberRole;
+use App\Mcp\Tools\UpdateCustomer;
+use App\Mcp\Tools\UpdateInvoice;
+use App\Mcp\Tools\UpdateOrganisation;
+use App\Mcp\Tools\VoidInvoice;
 use Laravel\Mcp\Server;
 use Laravel\Mcp\Server\Attributes\Instructions;
 use Laravel\Mcp\Server\Attributes\Name;
@@ -45,6 +59,20 @@ class InvoicingServer extends Server
         ListTeam::class,
         ReportsSummary::class,
         ReportsAging::class,
+        CreateInvoice::class,
+        UpdateInvoice::class,
+        AddInvoiceLine::class,
+        RemoveInvoiceLine::class,
+        SendInvoice::class,
+        MarkInvoicePaid::class,
+        VoidInvoice::class,
+        DeleteInvoiceTool::class,
+        CreateCustomer::class,
+        UpdateCustomer::class,
+        DeleteCustomer::class,
+        UpdateOrganisation::class,
+        InviteTeamMember::class,
+        SetTeamMemberRole::class,
     ];
 
     protected array $resources = [

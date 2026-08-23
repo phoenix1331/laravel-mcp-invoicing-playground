@@ -2,12 +2,13 @@
     <h1 class="text-2xl font-semibold text-[#0a2540]">MCP console</h1>
     <p class="mt-1 text-sm text-[#425466]">Connect an MCP client to this account, and see exactly what it can do.</p>
 
-    <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+    <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div class="rounded-lg bg-white p-6 shadow-[0_1px_3px_rgba(10,37,64,0.08)] ring-1 ring-slate-900/5">
-            <h2 class="text-sm font-medium text-[#0a2540]">Remote transport (Claude Desktop, ChatGPT, Cursor)</h2>
+            <h2 class="text-sm font-medium text-[#0a2540]">Remote transport (Claude Code, Cursor)</h2>
             <p class="mt-1 text-sm text-[#425466]">
                 An HTTP endpoint authenticated with a bearer token. Create one on the
                 <a href="{{ route('settings.tokens') }}" class="font-medium text-[#f87171] hover:text-[#ef4444]">API tokens</a> page first.
+                These clients read <code>url</code>/<code>headers</code> directly from their MCP config file.
             </p>
 
             <div x-data="{ copied: false }" class="mt-3">
@@ -27,6 +28,37 @@
                     <span x-show="!copied">Copy config</span>
                     <span x-show="copied" x-cloak>Copied!</span>
                 </button>
+            </div>
+        </div>
+
+        <div class="rounded-lg bg-white p-6 shadow-[0_1px_3px_rgba(10,37,64,0.08)] ring-1 ring-slate-900/5">
+            <h2 class="text-sm font-medium text-[#0a2540]">Claude Desktop</h2>
+            <p class="mt-1 text-sm text-[#425466]">
+                Claude Desktop's config file only starts local (stdio) servers - a remote HTTP server like this one must be
+                added via <strong>Settings &rarr; Connectors &rarr; Add custom connector</strong> instead of pasted into
+                <code>claude_desktop_config.json</code>. Use the URL and token below in that dialog.
+            </p>
+
+            <div class="mt-3 space-y-3">
+                <div x-data="{ copied: false }">
+                    <p class="text-xs font-medium uppercase tracking-wide text-[#8792a2]">Server URL</p>
+                    <div class="mt-1 flex items-center gap-2">
+                        <code x-ref="desktopUrl" class="flex-1 overflow-x-auto rounded-md bg-[#0a2540] px-3 py-2 text-xs text-[#e3e8ee]">{{ $webUrl }}</code>
+                        <button
+                            type="button"
+                            @click="navigator.clipboard.writeText($refs.desktopUrl.textContent); copied = true; setTimeout(() => copied = false, 2000)"
+                            class="shrink-0 rounded-md border border-[#e3e8ee] px-3 py-1.5 text-xs font-medium text-[#425466] hover:bg-[#f6f9fc]"
+                        >
+                            <span x-show="!copied">Copy</span>
+                            <span x-show="copied" x-cloak>Copied!</span>
+                        </button>
+                    </div>
+                </div>
+
+                <p class="text-sm text-[#425466]">
+                    Paste your token from the <a href="{{ route('settings.tokens') }}" class="font-medium text-[#f87171] hover:text-[#ef4444]">API tokens</a>
+                    page into the connector's Authorization header as <code>Bearer YOUR_TOKEN</code>.
+                </p>
             </div>
         </div>
 

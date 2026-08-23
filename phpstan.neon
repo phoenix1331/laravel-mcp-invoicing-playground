@@ -32,6 +32,16 @@ parameters:
         -
             identifier: method.unresolvableReturnType
             path: app/Mcp/Tools/*
+        # Same InvoiceStatus method-cast gap again: Larastan treats
+        # Invoice::$status as a plain string, so a `$status === EnumCase`
+        # comparison is (wrongly) considered always false, which cascades
+        # into "unreachable"/"always false" on the code that follows.
+        -
+            identifier: deadCode.unreachable
+            path: app/Mcp/Tools/*
+        -
+            identifier: ternary.alwaysFalse
+            path: app/Mcp/Tools/*
         -
             identifier: booleanAnd.alwaysFalse
             path: app/Policies/*
