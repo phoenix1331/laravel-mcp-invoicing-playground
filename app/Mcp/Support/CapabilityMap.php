@@ -36,6 +36,10 @@ class CapabilityMap
         'invoices.pdf' => 'invoices.download_pdf',
 
         'settings.organisation.update' => 'organisation.update',
+
+        'settings.team' => 'team.list',
+        'settings.team.store' => 'team.invite',
+        'settings.team.update' => 'team.set_role',
     ];
 
     /**

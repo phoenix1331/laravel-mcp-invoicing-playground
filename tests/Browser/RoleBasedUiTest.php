@@ -24,25 +24,31 @@ test('the invoice UI shows role-appropriate actions for viewer, member, and owne
             ->where('status', InvoiceStatus::Draft)
             ->firstOrFail();
 
-        // Viewer: no "New invoice" button on the list.
+        // Viewer: no "New invoice" button on the list, and no "Team" link in the sidebar.
         loginAsDuskUser($browser, 'user3@email.com');
 
         $browser->visit('/invoices')
             ->assertSee('Invoices')
             ->assertDontSee('New invoice');
 
+        $browser->visit('/dashboard')
+            ->assertDontSee('Team');
+
         $browser->logout();
 
-        // Member: no "Delete" button on a draft invoice.
+        // Member: no "Delete" button on a draft invoice, and no "Team" link in the sidebar.
         loginAsDuskUser($browser, 'user2@email.com');
 
         $browser->visit('/invoices/'.$draftInvoice->id)
             ->assertSee($draftInvoice->number)
             ->assertDontSee('Delete');
 
+        $browser->visit('/dashboard')
+            ->assertDontSee('Team');
+
         $browser->logout();
 
-        // Owner: sees both "New invoice" and "Delete" on a draft invoice.
+        // Owner: sees both "New invoice" and "Delete" on a draft invoice, and sees the "Team" link.
         loginAsDuskUser($browser, 'user1@email.com');
 
         $browser->visit('/invoices')
@@ -51,5 +57,8 @@ test('the invoice UI shows role-appropriate actions for viewer, member, and owne
         $browser->visit('/invoices/'.$draftInvoice->id)
             ->assertSee($draftInvoice->number)
             ->assertSee('Delete');
+
+        $browser->visit('/dashboard')
+            ->assertSee('Team');
     });
 });

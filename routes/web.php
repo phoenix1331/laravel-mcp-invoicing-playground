@@ -8,6 +8,7 @@ use App\Http\Controllers\InvoicePdfDownloadController;
 use App\Http\Controllers\McpAuditLogController;
 use App\Http\Controllers\McpConsoleController;
 use App\Http\Controllers\OrganisationSettingsController;
+use App\Http\Controllers\TeamController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -36,6 +37,10 @@ Route::middleware('auth')->scopeBindings()->group(function () {
     Route::get('/settings/tokens', [ApiTokenController::class, 'index'])->name('settings.tokens');
     Route::post('/settings/tokens', [ApiTokenController::class, 'store'])->name('settings.tokens.store');
     Route::delete('/settings/tokens/{token}', [ApiTokenController::class, 'destroy'])->name('settings.tokens.destroy');
+
+    Route::get('/settings/team', [TeamController::class, 'index'])->name('settings.team');
+    Route::post('/settings/team', [TeamController::class, 'store'])->name('settings.team.store');
+    Route::put('/settings/team/{user}', [TeamController::class, 'update'])->name('settings.team.update');
 
     Route::get('/settings/mcp', McpConsoleController::class)->name('settings.mcp');
 

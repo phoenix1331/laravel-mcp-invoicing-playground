@@ -16,6 +16,11 @@
         <a href="{{ route('settings.organisation') }}" class="flex items-center rounded-md px-3 py-2 text-sm font-medium text-[#425466] hover:bg-[#f6f9fc] hover:text-[#0a2540]">
             Organisation
         </a>
+        @if (auth()->user()?->role === App\Enums\UserRole::Owner)
+            <a href="{{ route('settings.team') }}" class="flex items-center rounded-md px-3 py-2 text-sm font-medium text-[#425466] hover:bg-[#f6f9fc] hover:text-[#0a2540]">
+                Team
+            </a>
+        @endif
         <a href="{{ route('settings.tokens') }}" class="flex items-center rounded-md px-3 py-2 text-sm font-medium text-[#425466] hover:bg-[#f6f9fc] hover:text-[#0a2540]">
             API tokens
         </a>
