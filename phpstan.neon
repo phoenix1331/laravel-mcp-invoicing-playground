@@ -16,6 +16,22 @@ parameters:
         - '#App\\Enums\\UserRole#'
         - '#App\\Enums\\InvoiceStatus#'
         - '#Cannot access property \$value on string#'
+        # The same method-based casts() gap applies to Invoice::$issue_date and
+        # $due_date ('date' cast): Larastan treats them as strings, so calls
+        # like toDateString() and startOfDay() are flagged as calls on a
+        # non-object. Scoped to those two method names only.
+        - '#Cannot call method (toDateString|startOfDay)\(\) on string#'
+        # Knock-on effect of the two ignores above: a Collection::map() closure
+        # that accesses an unresolved enum or date-cast property anywhere in its
+        # body loses its own inferable return type, surfacing as these two
+        # separate identifiers on top of the already-ignored root cause. Scoped
+        # to app/Mcp/Tools, the only place both gaps are combined in one closure.
+        -
+            identifier: argument.unresolvableType
+            path: app/Mcp/Tools/*
+        -
+            identifier: method.unresolvableReturnType
+            path: app/Mcp/Tools/*
         -
             identifier: booleanAnd.alwaysFalse
             path: app/Policies/*
@@ -26,8 +42,3 @@ parameters:
         -
             identifier: nullsafe.neverNull
             path: app/Actions/GenerateInvoicePdf.php
-        # AuthorizesToolAccess has no consumer until MCP tool classes exist.
-        # Remove this ignore once a tool uses the trait.
-        -
-            identifier: trait.unused
-            path: app/Mcp/Concerns/AuthorizesToolAccess.php

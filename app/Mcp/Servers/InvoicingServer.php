@@ -2,6 +2,14 @@
 
 namespace App\Mcp\Servers;
 
+use App\Mcp\Tools\GetCustomer;
+use App\Mcp\Tools\GetInvoice;
+use App\Mcp\Tools\GetOrganisation;
+use App\Mcp\Tools\ListCustomers;
+use App\Mcp\Tools\ListInvoices;
+use App\Mcp\Tools\ListTeam;
+use App\Mcp\Tools\ReportsAging;
+use App\Mcp\Tools\ReportsSummary;
 use Laravel\Mcp\Server;
 use Laravel\Mcp\Server\Attributes\Instructions;
 use Laravel\Mcp\Server\Attributes\Name;
@@ -25,7 +33,14 @@ use Laravel\Mcp\Server\Attributes\Version;
 class InvoicingServer extends Server
 {
     protected array $tools = [
-        //
+        ListInvoices::class,
+        GetInvoice::class,
+        ListCustomers::class,
+        GetCustomer::class,
+        GetOrganisation::class,
+        ListTeam::class,
+        ReportsSummary::class,
+        ReportsAging::class,
     ];
 
     protected array $resources = [
