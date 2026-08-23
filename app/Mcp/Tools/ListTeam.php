@@ -19,6 +19,8 @@ class ListTeam extends Tool
 {
     use AuthorizesToolAccess;
 
+    protected string $name = 'team.list';
+
     protected string $description = 'List the members of the caller\'s organisation, with their roles.';
 
     public function schema(JsonSchema $schema): array

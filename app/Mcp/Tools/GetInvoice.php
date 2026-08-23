@@ -20,6 +20,8 @@ class GetInvoice extends Tool
 {
     use AuthorizesToolAccess;
 
+    protected string $name = 'invoices.get';
+
     protected string $description = 'Get a single invoice, including its line items and customer, by id.';
 
     public function schema(JsonSchema $schema): array

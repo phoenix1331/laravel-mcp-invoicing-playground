@@ -18,6 +18,8 @@ class GetOrganisation extends Tool
 {
     use AuthorizesToolAccess;
 
+    protected string $name = 'organisation.get';
+
     protected string $description = 'Get the caller\'s organisation settings.';
 
     public function schema(JsonSchema $schema): array

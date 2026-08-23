@@ -19,6 +19,8 @@ class ListInvoices extends Tool
 {
     use AuthorizesToolAccess;
 
+    protected string $name = 'invoices.list';
+
     protected string $description = 'List the caller\'s organisation invoices, optionally filtered by status, customer or issue date range, and paginated.';
 
     public function schema(JsonSchema $schema): array

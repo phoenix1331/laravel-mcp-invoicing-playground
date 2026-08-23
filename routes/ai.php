@@ -7,7 +7,7 @@ use Laravel\Mcp\Facades\Mcp;
 
 // Remote transport - external AI clients (Claude Desktop, ChatGPT, Cursor)
 Mcp::web('/mcp/invoicing', InvoicingServer::class)
-    ->middleware(['auth:sanctum', 'throttle:mcp']);
+    ->middleware(['auth:sanctum', 'throttle:mcp', 'mcp.audit']);
 
 // Local transport - agents on the same machine (Claude Code)
 Mcp::local('invoicing', InvoicingServer::class);

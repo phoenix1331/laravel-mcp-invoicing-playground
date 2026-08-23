@@ -19,6 +19,8 @@ class GetCustomer extends Tool
 {
     use AuthorizesToolAccess;
 
+    protected string $name = 'customers.get';
+
     protected string $description = 'Get a single customer, including a summary of their invoice history, by id.';
 
     public function schema(JsonSchema $schema): array

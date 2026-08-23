@@ -19,6 +19,8 @@ class ReportsSummary extends Tool
 {
     use AuthorizesToolAccess;
 
+    protected string $name = 'reports.summary';
+
     protected string $description = 'Get the dashboard figures for the caller\'s organisation as structured data: outstanding, overdue and paid-this-month totals, draft count, and revenue by month.';
 
     public function schema(JsonSchema $schema): array

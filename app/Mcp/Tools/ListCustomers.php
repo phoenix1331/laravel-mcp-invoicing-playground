@@ -18,6 +18,8 @@ class ListCustomers extends Tool
 {
     use AuthorizesToolAccess;
 
+    protected string $name = 'customers.list';
+
     protected string $description = 'List the caller\'s organisation customers, with a count of their invoices.';
 
     public function schema(JsonSchema $schema): array

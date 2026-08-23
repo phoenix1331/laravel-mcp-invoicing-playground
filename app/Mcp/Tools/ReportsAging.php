@@ -20,6 +20,8 @@ class ReportsAging extends Tool
 {
     use AuthorizesToolAccess;
 
+    protected string $name = 'reports.aging';
+
     protected string $description = 'Get receivables aging buckets for the caller\'s organisation: sent invoices grouped by how many days overdue they are.';
 
     /**
