@@ -24,4 +24,4 @@ WORKDIR /app
 
 COPY . /app
 
-ENV SERVER_NAME=:8000
+ENV SERVER_NAME="http://localhost:8000, https://localhost:443"

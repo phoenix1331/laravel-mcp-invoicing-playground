@@ -3,6 +3,7 @@
 namespace App\Mcp\Servers;
 
 use App\Mcp\Resources\CustomerResource;
+use App\Mcp\Resources\InvoicePdfResource;
 use App\Mcp\Resources\InvoiceResource;
 use App\Mcp\Resources\InvoicingGuidelines;
 use App\Mcp\Resources\InvoicingSchema;
@@ -11,6 +12,7 @@ use App\Mcp\Tools\CreateCustomer;
 use App\Mcp\Tools\CreateInvoice;
 use App\Mcp\Tools\DeleteCustomer;
 use App\Mcp\Tools\DeleteInvoiceTool;
+use App\Mcp\Tools\DownloadInvoicePdf;
 use App\Mcp\Tools\GetCustomer;
 use App\Mcp\Tools\GetInvoice;
 use App\Mcp\Tools\GetOrganisation;
@@ -73,6 +75,7 @@ class InvoicingServer extends Server
         UpdateOrganisation::class,
         InviteTeamMember::class,
         SetTeamMemberRole::class,
+        DownloadInvoicePdf::class,
     ];
 
     protected array $resources = [
@@ -80,6 +83,7 @@ class InvoicingServer extends Server
         InvoicingSchema::class,
         InvoiceResource::class,
         CustomerResource::class,
+        InvoicePdfResource::class,
     ];
 
     protected array $prompts = [

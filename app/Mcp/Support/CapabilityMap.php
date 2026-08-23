@@ -94,6 +94,11 @@ class CapabilityMap
         // capability an MCP client would call on itself.
         'settings.mcp' => 'UI introspection of this server catalogue; not applicable to an MCP client',
 
+        // The signed download link issued by invoices.download_pdf, not an
+        // independent capability - it exists only because a tool cannot
+        // itself stream a file response, already mapped to invoices.pdf.
+        'invoices.pdf.signed' => 'Signed download link issued by invoices.download_pdf, already mapped',
+
         // Framework/infrastructure routes with no domain capability.
         'storage.local' => 'Laravel storage symlink passthrough, not an application route',
         'storage.local.upload' => 'Laravel storage symlink passthrough, not an application route',

@@ -59,6 +59,7 @@ it('registers a tool for every currently-built read route', function () {
     $readRoutes = [
         'invoices.index',
         'invoices.show',
+        'invoices.pdf',
         'customers.index',
         'customers.show',
     ];

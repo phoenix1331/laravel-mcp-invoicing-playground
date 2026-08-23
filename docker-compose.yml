@@ -6,10 +6,12 @@ services:
     init: true
     ports:
       - "8000:8000"
+      - "8443:443"
     volumes:
       - .:/app
+      - caddy-data:/data
     environment:
-      SERVER_NAME: ":8000"
+      SERVER_NAME: "http://localhost:8000, https://localhost:443"
     depends_on:
       mysql:
         condition: service_healthy
@@ -40,3 +42,4 @@ services:
 
 volumes:
   mysql-data:
+  caddy-data:

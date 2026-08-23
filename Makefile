@@ -1,4 +1,4 @@
-.PHONY: help up down build shell migrate seed test logs fresh pint stan lint-js format-js validate artisan composer npm dusk dusk-setup dusk-headed
+.PHONY: help up down build shell migrate seed test logs fresh pint stan lint-js format-js validate artisan composer npm dusk dusk-setup dusk-headed ssl-cert
 
 EXEC = docker compose exec -u $(shell id -u):$(shell id -g) -e HOME=/tmp app
 
@@ -64,3 +64,7 @@ dusk: ## run the dusk browser suite against the running app container
 
 dusk-headed: ## run dusk from the host with a visible browser window (needs host php, google-chrome, WSLg/X11)
 	@DUSK_HEADLESS_DISABLED=true DUSK_CHROME_BINARY=/usr/bin/google-chrome php artisan dusk
+
+ssl-cert: ## copy the local caddy CA root cert to ./storage/frankenphp-local-ca.crt for trusting on the host
+	@docker compose cp app:/data/caddy/pki/authorities/local/root.crt storage/frankenphp-local-ca.crt
+	@echo "Root cert saved to storage/frankenphp-local-ca.crt - see README for how to trust it."
