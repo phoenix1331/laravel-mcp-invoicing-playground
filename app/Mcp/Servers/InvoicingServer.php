@@ -2,6 +2,10 @@
 
 namespace App\Mcp\Servers;
 
+use App\Mcp\Resources\CustomerResource;
+use App\Mcp\Resources\InvoiceResource;
+use App\Mcp\Resources\InvoicingGuidelines;
+use App\Mcp\Resources\InvoicingSchema;
 use App\Mcp\Tools\GetCustomer;
 use App\Mcp\Tools\GetInvoice;
 use App\Mcp\Tools\GetOrganisation;
@@ -44,7 +48,10 @@ class InvoicingServer extends Server
     ];
 
     protected array $resources = [
-        //
+        InvoicingGuidelines::class,
+        InvoicingSchema::class,
+        InvoiceResource::class,
+        CustomerResource::class,
     ];
 
     protected array $prompts = [
