@@ -31,11 +31,11 @@
         <dl class="grid grid-cols-2 gap-4 text-sm">
             <div>
                 <dt class="text-[#8792a2]">Email</dt>
-                <dd class="mt-1 text-[#0a2540]">{{ $customer->email ?? '—' }}</dd>
+                <dd class="mt-1 text-[#0a2540]">{{ $customer->email ?? '-' }}</dd>
             </div>
             <div>
                 <dt class="text-[#8792a2]">Address</dt>
-                <dd class="mt-1 text-[#0a2540]">{{ $customer->address ?? '—' }}</dd>
+                <dd class="mt-1 text-[#0a2540]">{{ $customer->address ?? '-' }}</dd>
             </div>
         </dl>
     </div>

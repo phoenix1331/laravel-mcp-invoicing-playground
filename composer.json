@@ -9,6 +9,7 @@
         "php": "^8.3",
         "laravel/fortify": "^1.38",
         "laravel/framework": "^13.17",
+        "laravel/mcp": "^0.9.4",
         "laravel/tinker": "^3.0",
         "spatie/browsershot": "^5.4",
         "spatie/laravel-pdf": "^2.13"
