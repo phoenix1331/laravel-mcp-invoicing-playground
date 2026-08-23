@@ -11,6 +11,7 @@ use Tests\TestCase;
 
 pest()->extend(TestCase::class)->use(RefreshDatabase::class)->in('Feature');
 pest()->extend(TestCase::class)->in('Unit');
+pest()->extend(TestCase::class)->in('Mcp');
 pest()->extend(DuskTestCase::class)->in('Browser');
 
 function createUserWithRole(UserRole $role, ?Organisation $organisation = null): User

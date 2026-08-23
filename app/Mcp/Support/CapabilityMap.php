@@ -97,6 +97,7 @@ class CapabilityMap
         // Framework/infrastructure routes with no domain capability.
         'storage.local' => 'Laravel storage symlink passthrough, not an application route',
         'storage.local.upload' => 'Laravel storage symlink passthrough, not an application route',
+        'sanctum.csrf-cookie' => 'Sanctum SPA CSRF cookie endpoint, not an application route',
         'dusk.login' => 'Dusk test helper route, not part of the application',
         'dusk.logout' => 'Dusk test helper route, not part of the application',
         'dusk.user' => 'Dusk test helper route, not part of the application',

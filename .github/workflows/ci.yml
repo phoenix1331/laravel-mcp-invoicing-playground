@@ -166,7 +166,7 @@ jobs:
         run: npm run build
 
       - name: copy dusk env
-        run: cp .env.dusk.ci .env
+        run: cp .env.dusk.testing .env
 
       - name: generate app key
         run: php artisan key:generate
