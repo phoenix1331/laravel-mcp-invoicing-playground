@@ -2,6 +2,9 @@
 
 namespace App\Mcp\Servers;
 
+use App\Mcp\Prompts\ChaseOverduePrompt;
+use App\Mcp\Prompts\DraftInvoicePrompt;
+use App\Mcp\Prompts\MonthEndReviewPrompt;
 use App\Mcp\Resources\CustomerResource;
 use App\Mcp\Resources\InvoicePdfResource;
 use App\Mcp\Resources\InvoiceResource;
@@ -87,6 +90,8 @@ class InvoicingServer extends Server
     ];
 
     protected array $prompts = [
-        //
+        DraftInvoicePrompt::class,
+        ChaseOverduePrompt::class,
+        MonthEndReviewPrompt::class,
     ];
 }

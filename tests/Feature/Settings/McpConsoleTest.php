@@ -76,3 +76,17 @@ it('hides write tools from the catalogue when the writes kill switch is off', fu
         ->assertDontSee('invoices.delete')
         ->assertSee('invoices.list');
 });
+
+it('shows the live prompt catalogue', function () {
+    $organisation = Organisation::factory()->create();
+    $user = User::factory()->create(['organisation_id' => $organisation->id]);
+
+    $this->actingAs($user)
+        ->get(route('settings.mcp'))
+        ->assertOk()
+        ->assertSee([
+            'draft-invoice',
+            'chase-overdue',
+            'month-end-review',
+        ]);
+});
