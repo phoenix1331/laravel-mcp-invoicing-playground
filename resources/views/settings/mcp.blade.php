@@ -94,6 +94,61 @@
         it must run inside this project's container rather than against a URL.
     </div>
 
+    @php
+        $unsatisfiedCount = collect($parityMatrix)->reject(fn ($row) => $row['satisfied'])->count();
+    @endphp
+
+    <div class="mt-10 flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-[#0a2540]">Parity matrix</h2>
+        @if ($unsatisfiedCount === 0)
+            <span class="inline-flex items-center gap-1.5 rounded-full bg-[#e3f9ed] px-3 py-1 text-xs font-medium text-[#0e9f6e]">
+                <span aria-hidden="true">&check;</span> Every route is covered
+            </span>
+        @else
+            <span class="inline-flex items-center gap-1.5 rounded-full bg-[#fff5f5] px-3 py-1 text-xs font-medium text-[#df1b41]">
+                <span aria-hidden="true">&cross;</span> {{ $unsatisfiedCount }} {{ Str::plural('route', $unsatisfiedCount) }} not covered
+            </span>
+        @endif
+    </div>
+    <p class="mt-1 text-sm text-[#425466]">
+        Every named application route, alongside its MCP tool or its reasoned exemption. Generated at runtime from
+        <code>CapabilityMap</code> and the live server catalogue - if a route is added without updating either, this
+        page goes red and <code>McpParityTest</code> fails CI.
+    </p>
+
+    <div class="mt-3 overflow-hidden rounded-lg bg-white shadow-[0_1px_3px_rgba(10,37,64,0.08)] ring-1 ring-slate-900/5">
+        <table class="min-w-full divide-y divide-[#e3e8ee]">
+            <thead>
+                <tr class="text-left text-xs font-medium uppercase tracking-wide text-[#8792a2]">
+                    <th class="px-6 py-3">Route</th>
+                    <th class="px-6 py-3">MCP tool / exemption</th>
+                    <th class="px-6 py-3 text-right">Covered</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-[#e3e8ee]">
+                @foreach ($parityMatrix as $row)
+                    <tr>
+                        <td class="px-6 py-3 text-sm"><code class="text-[#0a2540]">{{ $row['route'] }}</code></td>
+                        <td class="px-6 py-3 text-sm text-[#425466]">
+                            @if ($row['tool'])
+                                <code>{{ $row['tool'] }}</code>
+                            @else
+                                {{ $row['reason'] }}
+                            @endif
+                        </td>
+                        <td class="px-6 py-3 text-right">
+                            @if ($row['satisfied'])
+                                <span class="text-[#0e9f6e]" title="Covered">&check;</span>
+                            @else
+                                <span class="text-[#df1b41]" title="Not covered">&cross;</span>
+                            @endif
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+
     <h2 class="mt-10 text-lg font-semibold text-[#0a2540]">Tools ({{ $tools->count() }})</h2>
     <div class="mt-3 space-y-3">
         @foreach ($tools as $tool)

@@ -69,12 +69,47 @@ it('hides write tools from the catalogue when the writes kill switch is off', fu
     $organisation = Organisation::factory()->create();
     $user = User::factory()->create(['organisation_id' => $organisation->id]);
 
-    $this->actingAs($user)
-        ->get(route('settings.mcp'))
-        ->assertOk()
-        ->assertDontSee('invoices.create')
-        ->assertDontSee('invoices.delete')
-        ->assertSee('invoices.list');
+    $response = $this->actingAs($user)->get(route('settings.mcp'));
+
+    $response->assertOk();
+
+    $toolNames = $response->viewData('tools')->pluck('name')->all();
+
+    expect($toolNames)->not->toContain('invoices.create')
+        ->not->toContain('invoices.delete')
+        ->toContain('invoices.list');
+});
+
+it('marks write routes as not covered in the parity matrix when the writes kill switch is off', function () {
+    config(['mcp.writes_enabled' => false]);
+
+    $organisation = Organisation::factory()->create();
+    $user = User::factory()->create(['organisation_id' => $organisation->id]);
+
+    $response = $this->actingAs($user)->get(route('settings.mcp'));
+
+    $response->assertOk();
+
+    $row = collect($response->viewData('parityMatrix'))->firstWhere('route', 'invoices.store');
+
+    expect($row)->not->toBeNull()
+        ->and($row['tool'])->toBe('invoices.create')
+        ->and($row['satisfied'])->toBeFalse();
+});
+
+it('marks every mapped route as covered in the parity matrix when writes are enabled', function () {
+    config(['mcp.writes_enabled' => true]);
+
+    $organisation = Organisation::factory()->create();
+    $user = User::factory()->create(['organisation_id' => $organisation->id]);
+
+    $response = $this->actingAs($user)->get(route('settings.mcp'));
+
+    $response->assertOk();
+
+    $unsatisfied = collect($response->viewData('parityMatrix'))->reject(fn ($row) => $row['satisfied']);
+
+    expect($unsatisfied)->toBeEmpty();
 });
 
 it('shows the live prompt catalogue', function () {

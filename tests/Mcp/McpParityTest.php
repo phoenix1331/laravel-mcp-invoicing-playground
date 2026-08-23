@@ -55,21 +55,10 @@ it('never maps a route that no longer exists', function () {
     );
 });
 
-it('registers a tool for every currently-built read route', function () {
-    $readRoutes = [
-        'invoices.index',
-        'invoices.show',
-        'invoices.pdf',
-        'customers.index',
-        'customers.show',
-    ];
-
+it('registers a tool for every mapped route', function () {
     $registered = registeredMcpToolNames();
 
-    foreach ($readRoutes as $routeName) {
-        $tool = CapabilityMap::toolFor($routeName);
-
-        Assert::assertNotNull($tool, "No CapabilityMap entry for [{$routeName}].");
+    foreach (CapabilityMap::mapped() as $routeName => $tool) {
         Assert::assertContains($tool, $registered, "Tool [{$tool}] mapped from [{$routeName}] is not registered on InvoicingServer.");
     }
 });
