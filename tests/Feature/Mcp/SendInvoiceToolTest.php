@@ -36,6 +36,13 @@ it('denies a viewer from sending an invoice', function () {
         ->assertHasErrors();
 });
 
+it('fails validation when invoice_id is missing', function () {
+    $user = User::factory()->create(['organisation_id' => $this->acme->id]);
+
+    InvoicingServer::actingAs($user)->tool(SendInvoice::class, [])
+        ->assertHasErrors();
+});
+
 it('refuses to send an invoice with no lines', function () {
     $user = User::factory()->create(['organisation_id' => $this->acme->id]);
     $invoice = Invoice::factory()->create(['organisation_id' => $this->acme->id, 'customer_id' => $this->customer->id, 'status' => InvoiceStatus::Draft]);

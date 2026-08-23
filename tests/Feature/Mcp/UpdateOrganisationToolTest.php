@@ -48,3 +48,18 @@ it('denies an unauthenticated caller', function () {
     InvoicingServer::tool(UpdateOrganisation::class, ['name' => 'X'])
         ->assertHasErrors(['Authentication is required']);
 });
+
+it('replays the original result instead of updating again when the idempotency key repeats', function () {
+    $acme = Organisation::factory()->create();
+    $user = User::factory()->create(['organisation_id' => $acme->id, 'role' => UserRole::Owner]);
+
+    $arguments = ['name' => 'Acme Renamed', 'idempotency_key' => 'retry-org-update-1'];
+
+    InvoicingServer::actingAs($user)->tool(UpdateOrganisation::class, $arguments)
+        ->assertOk()
+        ->assertStructuredContent(fn ($json) => $json->where('name', 'Acme Renamed')->etc());
+
+    InvoicingServer::actingAs($user)->tool(UpdateOrganisation::class, $arguments)
+        ->assertOk()
+        ->assertStructuredContent(fn ($json) => $json->where('name', 'Acme Renamed')->etc());
+});

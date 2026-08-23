@@ -41,3 +41,17 @@ it('denies an unauthenticated caller', function () {
     InvoicingServer::tool(CreateCustomer::class, ['name' => 'New Co'])
         ->assertHasErrors(['Authentication is required']);
 });
+
+it('replays the same result instead of creating a second customer when the idempotency key repeats', function () {
+    $user = User::factory()->create(['organisation_id' => $this->acme->id]);
+
+    $arguments = ['name' => 'New Co', 'email' => 'hello@newco.test', 'idempotency_key' => 'retry-customer-1'];
+
+    InvoicingServer::actingAs($user)->tool(CreateCustomer::class, $arguments)->assertOk();
+
+    expect(Customer::where('name', 'New Co')->count())->toBe(1);
+
+    InvoicingServer::actingAs($user)->tool(CreateCustomer::class, $arguments)->assertOk();
+
+    expect(Customer::where('name', 'New Co')->count())->toBe(1);
+});

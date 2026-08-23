@@ -38,6 +38,13 @@ it('returns a structured confirmation request instead of voiding when confirm is
     expect($invoice->fresh()->status)->toBe(InvoiceStatus::Sent);
 });
 
+it('fails validation when invoice_id is missing', function () {
+    $user = User::factory()->create(['organisation_id' => $this->acme->id]);
+
+    InvoicingServer::actingAs($user)->tool(VoidInvoice::class, ['confirm' => true])
+        ->assertHasErrors();
+});
+
 it('denies a viewer from voiding an invoice', function () {
     $user = User::factory()->create(['organisation_id' => $this->acme->id, 'role' => UserRole::Viewer]);
     $invoice = Invoice::factory()->create(['organisation_id' => $this->acme->id, 'customer_id' => $this->customer->id, 'status' => InvoiceStatus::Sent]);

@@ -72,3 +72,19 @@ it('denies an unauthenticated caller', function () {
     InvoicingServer::tool(SetTeamMemberRole::class, ['user_id' => $member->id, 'role' => 'viewer'])
         ->assertHasErrors(['Authentication is required']);
 });
+
+it('replays the original result instead of changing the role again when the idempotency key repeats', function () {
+    $acme = Organisation::factory()->create();
+    $owner = User::factory()->create(['organisation_id' => $acme->id, 'role' => UserRole::Owner]);
+    $member = User::factory()->create(['organisation_id' => $acme->id, 'role' => UserRole::Member]);
+
+    $arguments = ['user_id' => $member->id, 'role' => 'viewer', 'idempotency_key' => 'retry-set-role-1'];
+
+    InvoicingServer::actingAs($owner)->tool(SetTeamMemberRole::class, $arguments)
+        ->assertOk()
+        ->assertStructuredContent(fn ($json) => $json->where('role', 'viewer')->etc());
+
+    InvoicingServer::actingAs($owner)->tool(SetTeamMemberRole::class, $arguments)
+        ->assertOk()
+        ->assertStructuredContent(fn ($json) => $json->where('role', 'viewer')->etc());
+});

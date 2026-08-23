@@ -82,3 +82,23 @@ it('denies an unauthenticated caller', function () {
         'role' => 'member',
     ])->assertHasErrors(['Authentication is required']);
 });
+
+it('replays the same result instead of inviting a second member when the idempotency key repeats', function () {
+    $acme = Organisation::factory()->create();
+    $user = User::factory()->create(['organisation_id' => $acme->id, 'role' => UserRole::Owner]);
+
+    $arguments = [
+        'name' => 'New Member',
+        'email' => 'new.member@acme.test',
+        'role' => 'member',
+        'idempotency_key' => 'retry-invite-1',
+    ];
+
+    InvoicingServer::actingAs($user)->tool(InviteTeamMember::class, $arguments)->assertOk();
+
+    expect(User::where('email', 'new.member@acme.test')->count())->toBe(1);
+
+    InvoicingServer::actingAs($user)->tool(InviteTeamMember::class, $arguments)->assertOk();
+
+    expect(User::where('email', 'new.member@acme.test')->count())->toBe(1);
+});

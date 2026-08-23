@@ -87,3 +87,19 @@ it('denies an unauthenticated caller', function () {
     InvoicingServer::tool(UpdateInvoice::class, updateInvoiceArguments($invoice->id, $this->customer->id))
         ->assertHasErrors(['Authentication is required']);
 });
+
+it('replays the original result instead of updating again when the idempotency key repeats', function () {
+    $user = User::factory()->create(['organisation_id' => $this->acme->id]);
+    $invoice = Invoice::factory()->create(['organisation_id' => $this->acme->id, 'customer_id' => $this->customer->id, 'status' => InvoiceStatus::Draft]);
+    InvoiceLine::factory()->for($invoice)->create();
+
+    $arguments = [...updateInvoiceArguments($invoice->id, $this->customer->id), 'idempotency_key' => 'retry-update-1'];
+
+    InvoicingServer::actingAs($user)->tool(UpdateInvoice::class, $arguments)
+        ->assertOk()
+        ->assertStructuredContent(fn ($json) => $json->where('total', 220)->etc());
+
+    InvoicingServer::actingAs($user)->tool(UpdateInvoice::class, $arguments)
+        ->assertOk()
+        ->assertStructuredContent(fn ($json) => $json->where('total', 220)->etc());
+});

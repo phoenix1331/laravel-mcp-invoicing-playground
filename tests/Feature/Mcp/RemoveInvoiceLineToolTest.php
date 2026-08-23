@@ -87,3 +87,17 @@ it('denies an unauthenticated caller', function () {
         'line_id' => $line->id,
     ])->assertHasErrors(['Authentication is required']);
 });
+
+it('replays the original result instead of failing on retry after the line was already removed', function () {
+    $user = User::factory()->create(['organisation_id' => $this->acme->id]);
+    $invoice = Invoice::factory()->create(['organisation_id' => $this->acme->id, 'customer_id' => $this->customer->id, 'status' => InvoiceStatus::Draft]);
+    $line = InvoiceLine::factory()->for($invoice)->create();
+    InvoiceLine::factory()->for($invoice)->create();
+
+    $arguments = ['invoice_id' => $invoice->id, 'line_id' => $line->id, 'idempotency_key' => 'retry-remove-line-1'];
+
+    InvoicingServer::actingAs($user)->tool(RemoveInvoiceLine::class, $arguments)->assertOk();
+    InvoicingServer::actingAs($user)->tool(RemoveInvoiceLine::class, $arguments)->assertOk();
+
+    expect($invoice->lines()->count())->toBe(1);
+});

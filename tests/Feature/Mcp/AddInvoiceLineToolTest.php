@@ -94,3 +94,22 @@ it('denies an unauthenticated caller', function () {
         'unit_price' => 50,
     ])->assertHasErrors(['Authentication is required']);
 });
+
+it('replays the original result instead of adding a second line when the idempotency key repeats', function () {
+    $user = User::factory()->create(['organisation_id' => $this->acme->id]);
+    $invoice = Invoice::factory()->create(['organisation_id' => $this->acme->id, 'customer_id' => $this->customer->id, 'status' => InvoiceStatus::Draft]);
+    InvoiceLine::factory()->for($invoice)->create();
+
+    $arguments = [
+        'invoice_id' => $invoice->id,
+        'description' => 'Extra work',
+        'quantity' => 1,
+        'unit_price' => 50,
+        'idempotency_key' => 'retry-add-line-1',
+    ];
+
+    InvoicingServer::actingAs($user)->tool(AddInvoiceLine::class, $arguments)->assertOk();
+    InvoicingServer::actingAs($user)->tool(AddInvoiceLine::class, $arguments)->assertOk();
+
+    expect($invoice->lines()->count())->toBe(2);
+});

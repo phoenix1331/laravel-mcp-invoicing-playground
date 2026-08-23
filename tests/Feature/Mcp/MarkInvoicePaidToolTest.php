@@ -33,6 +33,13 @@ it('denies a viewer from marking an invoice paid', function () {
         ->assertHasErrors();
 });
 
+it('fails validation when invoice_id is missing', function () {
+    $user = User::factory()->create(['organisation_id' => $this->acme->id]);
+
+    InvoicingServer::actingAs($user)->tool(MarkInvoicePaid::class, [])
+        ->assertHasErrors();
+});
+
 it('refuses to mark a draft invoice as paid', function () {
     $user = User::factory()->create(['organisation_id' => $this->acme->id]);
     $invoice = Invoice::factory()->create(['organisation_id' => $this->acme->id, 'customer_id' => $this->customer->id, 'status' => InvoiceStatus::Draft]);
@@ -56,4 +63,19 @@ it('denies an unauthenticated caller', function () {
 
     InvoicingServer::tool(MarkInvoicePaid::class, ['invoice_id' => $invoice->id])
         ->assertHasErrors(['Authentication is required']);
+});
+
+it('replays the original result instead of failing on retry after the invoice was already marked paid', function () {
+    $user = User::factory()->create(['organisation_id' => $this->acme->id]);
+    $invoice = Invoice::factory()->create(['organisation_id' => $this->acme->id, 'customer_id' => $this->customer->id, 'status' => InvoiceStatus::Sent]);
+
+    $arguments = ['invoice_id' => $invoice->id, 'idempotency_key' => 'retry-mark-paid-1'];
+
+    InvoicingServer::actingAs($user)->tool(MarkInvoicePaid::class, $arguments)
+        ->assertOk()
+        ->assertStructuredContent(fn ($json) => $json->where('status', 'paid')->etc());
+
+    InvoicingServer::actingAs($user)->tool(MarkInvoicePaid::class, $arguments)
+        ->assertOk()
+        ->assertStructuredContent(fn ($json) => $json->where('status', 'paid')->etc());
 });
