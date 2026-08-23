@@ -18,4 +18,20 @@ return [
 
     'writes_enabled' => env('MCP_WRITES_ENABLED', true),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Allowed Custom Schemes
+    |--------------------------------------------------------------------------
+    |
+    | Native desktop OAuth clients like Claude Desktop use a private-use URI
+    | scheme (RFC 8252) for their redirect callback instead of an https URL.
+    | 'claude' permits Claude Desktop's Connectors flow to register itself
+    | via the dynamic client registration endpoint.
+    |
+    */
+
+    'custom_schemes' => [
+        'claude',
+    ],
+
 ];

@@ -13,7 +13,7 @@ services:
       - .:/app
       - caddy-data:/data
     environment:
-      SERVER_NAME: "http://localhost:8000, https://localhost:443"
+      SERVER_NAME: "http://localhost:8000, https://localhost:443, https://aptly-snuff-consent.ngrok-free.dev"
     depends_on:
       mysql:
         condition: service_healthy

@@ -9,6 +9,7 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Passport\Passport;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -32,6 +33,8 @@ class AppServiceProvider extends ServiceProvider
                 ? Limit::perMinute(20)->by("write:{$by}")
                 : Limit::perMinute(60)->by("read:{$by}");
         });
+
+        Passport::authorizationView('auth.oauth.authorize');
     }
 
     /**

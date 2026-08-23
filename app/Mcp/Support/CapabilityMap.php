@@ -117,6 +117,29 @@ class CapabilityMap
         'dusk.login' => 'Dusk test helper route, not part of the application',
         'dusk.logout' => 'Dusk test helper route, not part of the application',
         'dusk.user' => 'Dusk test helper route, not part of the application',
+
+        // OAuth 2.1 discovery and dynamic client registration, registered by
+        // Mcp::oauthRoutes() - infrastructure an MCP client uses to obtain a
+        // token, not an application capability the token then grants access
+        // to. The mcp/invoicing endpoint that OAuth protects is itself the
+        // capability surface, already covered by every MAPPED entry above.
+        'mcp.oauth.protected-resource' => 'OAuth 2.1 discovery metadata, not an application capability',
+        'mcp.oauth.protected-resource.nested' => 'OAuth 2.1 discovery metadata, not an application capability',
+        'mcp.oauth.authorization-server' => 'OAuth 2.1 discovery metadata, not an application capability',
+        'mcp.oauth.authorization-server.nested' => 'OAuth 2.1 discovery metadata, not an application capability',
+
+        // Passport's own routes: the OAuth token-issuance machinery itself,
+        // not a capability the issued token grants access to.
+        'passport.authorizations.authorize' => 'OAuth 2.1 consent screen, not an application capability',
+        'passport.authorizations.approve' => 'OAuth 2.1 consent screen, not an application capability',
+        'passport.authorizations.deny' => 'OAuth 2.1 consent screen, not an application capability',
+        'passport.token' => 'OAuth 2.1 token issuance, not an application capability',
+        'passport.token.refresh' => 'OAuth 2.1 token refresh, not an application capability',
+        'passport.device' => 'OAuth 2.1 device code grant, unused by this server\'s MCP clients',
+        'passport.device.code' => 'OAuth 2.1 device code grant, unused by this server\'s MCP clients',
+        'passport.device.authorizations.authorize' => 'OAuth 2.1 device code grant, unused by this server\'s MCP clients',
+        'passport.device.authorizations.approve' => 'OAuth 2.1 device code grant, unused by this server\'s MCP clients',
+        'passport.device.authorizations.deny' => 'OAuth 2.1 device code grant, unused by this server\'s MCP clients',
     ];
 
     /**

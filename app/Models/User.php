@@ -18,7 +18,18 @@ use Laravel\Sanctum\HasApiTokens;
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
+    /**
+     * Sanctum's trait covers both the manual bearer tokens issued from
+     * /settings/tokens and the `api` guard's OAuth tokens (driver: passport,
+     * used by MCP clients such as Claude Desktop) - Passport's TokenGuard
+     * only ever calls withAccessToken() on this model, which Sanctum's
+     * version already handles generically: it stores whatever token object
+     * is passed, and tokenCan() then calls ->can() on it, which both
+     * Sanctum's PersonalAccessToken and Passport's AccessToken/
+     * TransientToken implement. No separate Passport trait is needed.
+     *
+     * @use HasFactory<UserFactory>
+     */
     use HasApiTokens, HasFactory, Notifiable, TwoFactorAuthenticatable;
 
     /**
