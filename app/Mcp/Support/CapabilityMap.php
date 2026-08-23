@@ -83,6 +83,13 @@ class CapabilityMap
         // data, not a distinct write or read capability of its own.
         'dashboard' => 'UI aggregation; equivalent data is exposed via the reports.summary and reports.aging tools',
 
+        // API token management: how a human issues themselves the credential
+        // an MCP client will use. An MCP client cannot mint its own bearer
+        // token through the same server it would then authenticate to.
+        'settings.tokens' => 'Session-based credential management; not applicable to an MCP client',
+        'settings.tokens.store' => 'Session-based credential management; not applicable to an MCP client',
+        'settings.tokens.destroy' => 'Session-based credential management; not applicable to an MCP client',
+
         // Framework/infrastructure routes with no domain capability.
         'storage.local' => 'Laravel storage symlink passthrough, not an application route',
         'storage.local.upload' => 'Laravel storage symlink passthrough, not an application route',

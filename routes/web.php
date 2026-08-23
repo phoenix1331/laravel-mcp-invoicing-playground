@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ApiTokenController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvoiceController;
@@ -20,4 +21,8 @@ Route::middleware('auth')->scopeBindings()->group(function () {
     Route::post('/invoices/{invoice}/mark-paid', [InvoiceController::class, 'markPaid'])->name('invoices.mark-paid');
     Route::post('/invoices/{invoice}/void', [InvoiceController::class, 'void'])->name('invoices.void');
     Route::get('/invoices/{invoice}/pdf', [InvoiceController::class, 'downloadPdf'])->name('invoices.pdf');
+
+    Route::get('/settings/tokens', [ApiTokenController::class, 'index'])->name('settings.tokens');
+    Route::post('/settings/tokens', [ApiTokenController::class, 'store'])->name('settings.tokens.store');
+    Route::delete('/settings/tokens/{token}', [ApiTokenController::class, 'destroy'])->name('settings.tokens.destroy');
 });
