@@ -6,6 +6,7 @@ namespace App\Mcp\Tools;
 
 use App\Actions\TransitionInvoiceStatus;
 use App\Mcp\Concerns\AuthorizesToolAccess;
+use App\Mcp\Support\ConfirmationGate;
 use App\Mcp\Support\Idempotency;
 use App\Models\Invoice;
 use App\Models\User;
@@ -26,12 +27,14 @@ class VoidInvoice extends Tool
 
     protected string $name = 'invoices.void';
 
-    protected string $description = 'Transition a sent invoice to void. This is permanent - the invoice cannot be revived.';
+    protected string $description = 'Transition a sent invoice to void. This is permanent - the invoice cannot be revived. Requires confirm: true.';
 
     public function schema(JsonSchema $schema): array
     {
         return [
             'invoice_id' => $schema->integer()->required()->description('The id of the sent invoice to void.'),
+            'confirm' => $schema->boolean()
+                ->description('Must be true to actually void. Omitted or false returns a description of the consequences instead.'),
             'idempotency_key' => $schema->string()
                 ->description('Optional. Reusing the same key within 24h replays the original result, so a retry after the invoice was already voided does not surface as an error.'),
         ];
@@ -49,6 +52,7 @@ class VoidInvoice extends Tool
     {
         $data = $request->validate([
             'invoice_id' => ['required', 'integer'],
+            'confirm' => ['nullable', 'boolean'],
             'idempotency_key' => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -60,6 +64,12 @@ class VoidInvoice extends Tool
 
         if ($error = $this->authorizeTool($request, 'update', $invoice)) {
             return $error;
+        }
+
+        $consequence = "void invoice {$invoice->number}, currently {$invoice->status->value}. This is permanent and the invoice cannot be revived or edited afterwards.";
+
+        if ($confirmation = app(ConfirmationGate::class)->requireConfirmation((bool) ($data['confirm'] ?? false), 'void this invoice', $consequence)) {
+            return $confirmation;
         }
 
         /** @var User $user */

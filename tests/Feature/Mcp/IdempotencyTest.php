@@ -107,3 +107,20 @@ it('replays a plain text response without structured content', function () {
     expect($calls)->toBe(1);
     expect((string) $second->content())->toBe('plain summary');
 });
+
+it('does not cache a confirmation-required response and runs the callback again on retry', function () {
+    $calls = 0;
+
+    $idempotency = app(Idempotency::class);
+
+    $callback = function () use (&$calls) {
+        $calls++;
+
+        return Response::make(Response::text('please confirm'))->withStructuredContent(['requires_confirmation' => true]);
+    };
+
+    $idempotency->remember('test.tool', 'confirm-key', 1, $callback);
+    $idempotency->remember('test.tool', 'confirm-key', 1, $callback);
+
+    expect($calls)->toBe(2);
+});

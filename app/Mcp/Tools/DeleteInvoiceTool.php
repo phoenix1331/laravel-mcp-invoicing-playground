@@ -7,6 +7,7 @@ namespace App\Mcp\Tools;
 use App\Actions\DeleteInvoice;
 use App\Enums\InvoiceStatus;
 use App\Mcp\Concerns\AuthorizesToolAccess;
+use App\Mcp\Support\ConfirmationGate;
 use App\Mcp\Support\Idempotency;
 use App\Models\Invoice;
 use App\Models\User;
@@ -26,12 +27,14 @@ class DeleteInvoiceTool extends Tool
 
     protected string $name = 'invoices.delete';
 
-    protected string $description = 'Delete a draft invoice outright. Any other status is voided instead, since it can no longer be deleted.';
+    protected string $description = 'Delete a draft invoice outright. Any other status is voided instead, since it can no longer be deleted. Requires confirm: true.';
 
     public function schema(JsonSchema $schema): array
     {
         return [
             'invoice_id' => $schema->integer()->required()->description('The id of the invoice to delete.'),
+            'confirm' => $schema->boolean()
+                ->description('Must be true to actually delete. Omitted or false returns a description of the consequences instead.'),
             'idempotency_key' => $schema->string()
                 ->description('Optional. Reusing the same key within 24h replays the original result, so a retry after the invoice was already deleted does not surface as an error.'),
         ];
@@ -49,6 +52,7 @@ class DeleteInvoiceTool extends Tool
     {
         $data = $request->validate([
             'invoice_id' => ['required', 'integer'],
+            'confirm' => ['nullable', 'boolean'],
             'idempotency_key' => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -76,6 +80,14 @@ class DeleteInvoiceTool extends Tool
 
         if ($error = $this->authorizeTool($request, 'delete', $invoice)) {
             return $error;
+        }
+
+        $consequence = $invoice->status === InvoiceStatus::Draft
+            ? "delete draft invoice {$invoice->number} outright. This cannot be undone."
+            : "void invoice {$invoice->number} instead of deleting it, since only draft invoices can be deleted. Voiding is permanent and the invoice cannot be revived.";
+
+        if ($confirmation = app(ConfirmationGate::class)->requireConfirmation((bool) ($data['confirm'] ?? false), 'delete this invoice', $consequence)) {
+            return $confirmation;
         }
 
         $wasDraft = $invoice->status === InvoiceStatus::Draft;

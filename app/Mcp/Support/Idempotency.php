@@ -43,9 +43,23 @@ class Idempotency
 
         $response = $callback();
 
-        Cache::put($cacheKey, $this->toCacheable($response), now()->addHours(self::TTL_HOURS));
+        if (! $this->isConfirmationPrompt($response)) {
+            Cache::put($cacheKey, $this->toCacheable($response), now()->addHours(self::TTL_HOURS));
+        }
 
         return $response;
+    }
+
+    /**
+     * A ConfirmationGate prompt is not a completed call - the mutation it
+     * describes never happened, so it must never be cached as the result
+     * for this key. The next call (confirmed or not) needs to run for real.
+     */
+    private function isConfirmationPrompt(Response|ResponseFactory $response): bool
+    {
+        $factory = $response instanceof Response ? Response::make($response) : $response;
+
+        return ($factory->getStructuredContent()['requires_confirmation'] ?? false) === true;
     }
 
     private function cacheKey(string $toolName, string $idempotencyKey, int $organisationId): string

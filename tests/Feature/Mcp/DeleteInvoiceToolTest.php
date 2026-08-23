@@ -16,38 +16,64 @@ beforeEach(function () {
     $this->customer = Customer::factory()->create(['organisation_id' => $this->acme->id]);
 });
 
-it('deletes a draft invoice outright for owner', function () {
+it('deletes a draft invoice outright for owner when confirmed', function () {
     $user = User::factory()->create(['organisation_id' => $this->acme->id, 'role' => UserRole::Owner]);
     $invoice = Invoice::factory()->create(['organisation_id' => $this->acme->id, 'customer_id' => $this->customer->id, 'status' => InvoiceStatus::Draft]);
 
-    InvoicingServer::actingAs($user)->tool(DeleteInvoiceTool::class, ['invoice_id' => $invoice->id])
+    InvoicingServer::actingAs($user)->tool(DeleteInvoiceTool::class, ['invoice_id' => $invoice->id, 'confirm' => true])
         ->assertOk()
         ->assertStructuredContent(fn ($json) => $json->where('status', 'deleted')->etc());
 
     expect(Invoice::withoutGlobalScopes()->find($invoice->id))->toBeNull();
 });
 
-it('voids a non-draft invoice instead of deleting it', function () {
+it('voids a non-draft invoice instead of deleting it when confirmed', function () {
     $user = User::factory()->create(['organisation_id' => $this->acme->id, 'role' => UserRole::Owner]);
     $invoice = Invoice::factory()->create(['organisation_id' => $this->acme->id, 'customer_id' => $this->customer->id, 'status' => InvoiceStatus::Sent]);
 
-    InvoicingServer::actingAs($user)->tool(DeleteInvoiceTool::class, ['invoice_id' => $invoice->id])
+    InvoicingServer::actingAs($user)->tool(DeleteInvoiceTool::class, ['invoice_id' => $invoice->id, 'confirm' => true])
         ->assertOk()
         ->assertStructuredContent(fn ($json) => $json->where('status', 'void')->etc());
+});
+
+it('returns a structured confirmation request instead of deleting when confirm is absent', function () {
+    $user = User::factory()->create(['organisation_id' => $this->acme->id, 'role' => UserRole::Owner]);
+    $invoice = Invoice::factory()->create(['organisation_id' => $this->acme->id, 'customer_id' => $this->customer->id, 'status' => InvoiceStatus::Draft]);
+
+    InvoicingServer::actingAs($user)->tool(DeleteInvoiceTool::class, ['invoice_id' => $invoice->id])
+        ->assertOk()
+        ->assertStructuredContent(fn ($json) => $json
+            ->where('requires_confirmation', true)
+            ->etc());
+
+    expect(Invoice::withoutGlobalScopes()->find($invoice->id))->not->toBeNull();
+});
+
+it('returns a structured confirmation request when confirm is explicitly false', function () {
+    $user = User::factory()->create(['organisation_id' => $this->acme->id, 'role' => UserRole::Owner]);
+    $invoice = Invoice::factory()->create(['organisation_id' => $this->acme->id, 'customer_id' => $this->customer->id, 'status' => InvoiceStatus::Draft]);
+
+    InvoicingServer::actingAs($user)->tool(DeleteInvoiceTool::class, ['invoice_id' => $invoice->id, 'confirm' => false])
+        ->assertOk()
+        ->assertStructuredContent(fn ($json) => $json
+            ->where('requires_confirmation', true)
+            ->etc());
+
+    expect(Invoice::withoutGlobalScopes()->find($invoice->id))->not->toBeNull();
 });
 
 it('denies member and viewer from deleting an invoice', function (UserRole $role) {
     $user = User::factory()->create(['organisation_id' => $this->acme->id, 'role' => $role]);
     $invoice = Invoice::factory()->create(['organisation_id' => $this->acme->id, 'customer_id' => $this->customer->id, 'status' => InvoiceStatus::Draft]);
 
-    InvoicingServer::actingAs($user)->tool(DeleteInvoiceTool::class, ['invoice_id' => $invoice->id])
+    InvoicingServer::actingAs($user)->tool(DeleteInvoiceTool::class, ['invoice_id' => $invoice->id, 'confirm' => true])
         ->assertHasErrors();
 })->with([UserRole::Member, UserRole::Viewer]);
 
 it('fails validation when invoice_id is missing', function () {
     $user = User::factory()->create(['organisation_id' => $this->acme->id, 'role' => UserRole::Owner]);
 
-    InvoicingServer::actingAs($user)->tool(DeleteInvoiceTool::class, [])
+    InvoicingServer::actingAs($user)->tool(DeleteInvoiceTool::class, ['confirm' => true])
         ->assertHasErrors();
 });
 
@@ -57,14 +83,14 @@ it('denies deleting a cross-tenant invoice', function () {
     $globexCustomer = Customer::factory()->create(['organisation_id' => $globex->id]);
     $invoice = Invoice::factory()->create(['organisation_id' => $globex->id, 'customer_id' => $globexCustomer->id, 'status' => InvoiceStatus::Draft]);
 
-    InvoicingServer::actingAs($user)->tool(DeleteInvoiceTool::class, ['invoice_id' => $invoice->id])
+    InvoicingServer::actingAs($user)->tool(DeleteInvoiceTool::class, ['invoice_id' => $invoice->id, 'confirm' => true])
         ->assertHasErrors();
 });
 
 it('denies an unauthenticated caller', function () {
     $invoice = Invoice::factory()->create(['organisation_id' => $this->acme->id, 'customer_id' => $this->customer->id, 'status' => InvoiceStatus::Draft]);
 
-    InvoicingServer::tool(DeleteInvoiceTool::class, ['invoice_id' => $invoice->id])
+    InvoicingServer::tool(DeleteInvoiceTool::class, ['invoice_id' => $invoice->id, 'confirm' => true])
         ->assertHasErrors(['Authentication is required']);
 });
 
@@ -72,7 +98,7 @@ it('replays the original result on retry after the invoice was already deleted',
     $user = User::factory()->create(['organisation_id' => $this->acme->id, 'role' => UserRole::Owner]);
     $invoice = Invoice::factory()->create(['organisation_id' => $this->acme->id, 'customer_id' => $this->customer->id, 'status' => InvoiceStatus::Draft]);
 
-    $arguments = ['invoice_id' => $invoice->id, 'idempotency_key' => 'retry-delete-1'];
+    $arguments = ['invoice_id' => $invoice->id, 'confirm' => true, 'idempotency_key' => 'retry-delete-1'];
 
     InvoicingServer::actingAs($user)->tool(DeleteInvoiceTool::class, $arguments)
         ->assertOk()
@@ -81,4 +107,22 @@ it('replays the original result on retry after the invoice was already deleted',
     InvoicingServer::actingAs($user)->tool(DeleteInvoiceTool::class, $arguments)
         ->assertOk()
         ->assertStructuredContent(fn ($json) => $json->where('status', 'deleted')->etc());
+});
+
+it('does not cache an unconfirmed request under the idempotency key', function () {
+    $user = User::factory()->create(['organisation_id' => $this->acme->id, 'role' => UserRole::Owner]);
+    $invoice = Invoice::factory()->create(['organisation_id' => $this->acme->id, 'customer_id' => $this->customer->id, 'status' => InvoiceStatus::Draft]);
+
+    $key = 'confirm-then-retry';
+
+    InvoicingServer::actingAs($user)->tool(DeleteInvoiceTool::class, ['invoice_id' => $invoice->id, 'idempotency_key' => $key])
+        ->assertStructuredContent(fn ($json) => $json->where('requires_confirmation', true)->etc());
+
+    expect(Invoice::withoutGlobalScopes()->find($invoice->id))->not->toBeNull();
+
+    InvoicingServer::actingAs($user)->tool(DeleteInvoiceTool::class, ['invoice_id' => $invoice->id, 'confirm' => true, 'idempotency_key' => $key])
+        ->assertOk()
+        ->assertStructuredContent(fn ($json) => $json->where('status', 'deleted')->etc());
+
+    expect(Invoice::withoutGlobalScopes()->find($invoice->id))->toBeNull();
 });
