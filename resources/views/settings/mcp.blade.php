@@ -2,7 +2,7 @@
     <h1 class="text-2xl font-semibold text-[#0a2540]">MCP console</h1>
     <p class="mt-1 text-sm text-[#425466]">Connect an MCP client to this account, and see exactly what it can do.</p>
 
-    <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+    <div class="mt-6 space-y-8">
         <div class="rounded-lg bg-white p-6 shadow-[0_1px_3px_rgba(10,37,64,0.08)] ring-1 ring-slate-900/5">
             <h2 class="text-sm font-medium text-[#0a2540]">Remote transport (Claude Code, Cursor)</h2>
             <p class="mt-1 text-sm text-[#425466]">
@@ -149,7 +149,9 @@
         </table>
     </div>
 
-    <h2 class="mt-10 text-lg font-semibold text-[#0a2540]">Tools ({{ $tools->count() }})</h2>
+    <div class="mt-10">
+        <h2 class="text-lg font-semibold text-[#0a2540]">Tools ({{ $tools->count() }})</h2>
+    </div>
     <div class="mt-3 space-y-3">
         @foreach ($tools as $tool)
             <details class="overflow-hidden rounded-lg bg-white shadow-[0_1px_3px_rgba(10,37,64,0.08)] ring-1 ring-slate-900/5">
@@ -170,7 +172,9 @@
         @endforeach
     </div>
 
-    <h2 class="mt-10 text-lg font-semibold text-[#0a2540]">Resources ({{ $resources->count() + $resourceTemplates->count() }})</h2>
+    <div class="mt-10">
+        <h2 class="text-lg font-semibold text-[#0a2540]">Resources ({{ $resources->count() + $resourceTemplates->count() }})</h2>
+    </div>
     <div class="mt-3 space-y-3">
         @foreach ($resources->concat($resourceTemplates) as $resource)
             <div class="rounded-lg bg-white px-6 py-4 shadow-[0_1px_3px_rgba(10,37,64,0.08)] ring-1 ring-slate-900/5">
@@ -180,7 +184,9 @@
         @endforeach
     </div>
 
-    <h2 class="mt-10 text-lg font-semibold text-[#0a2540]">Prompts ({{ $prompts->count() }})</h2>
+    <div class="mt-10">
+        <h2 class="text-lg font-semibold text-[#0a2540]">Prompts ({{ $prompts->count() }})</h2>
+    </div>
     <div class="mt-3 space-y-3">
         @forelse ($prompts as $prompt)
             <div class="rounded-lg bg-white px-6 py-4 shadow-[0_1px_3px_rgba(10,37,64,0.08)] ring-1 ring-slate-900/5">

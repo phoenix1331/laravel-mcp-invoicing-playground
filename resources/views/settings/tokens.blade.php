@@ -3,10 +3,20 @@
     <p class="mt-1 text-sm text-[#425466]">Create a token here to connect an MCP client such as Claude Desktop or Cursor to this account.</p>
 
     @if (session('plainTextToken'))
-        <div class="mt-6 rounded-lg border border-[#f87171] bg-[#fff5f5] p-4">
+        <div x-data="{ copied: false }" class="mt-6 rounded-lg border border-[#f87171] bg-[#fff5f5] p-4">
             <p class="text-sm font-medium text-[#0a2540]">Your new token</p>
             <p class="mt-1 text-sm text-[#425466]">Copy it now - it will not be shown again.</p>
-            <code class="mt-2 block break-all rounded-md bg-white px-3 py-2 text-sm text-[#0a2540] ring-1 ring-[#e3e8ee]">{{ session('plainTextToken') }}</code>
+            <div class="mt-2 flex items-center gap-2">
+                <code x-ref="plainTextToken" class="block flex-1 break-all rounded-md bg-white px-3 py-2 text-sm text-[#0a2540] ring-1 ring-[#e3e8ee]">{{ session('plainTextToken') }}</code>
+                <button
+                    type="button"
+                    @click="navigator.clipboard.writeText($refs.plainTextToken.textContent); copied = true; setTimeout(() => copied = false, 2000)"
+                    class="shrink-0 rounded-md border border-[#e3e8ee] bg-white px-3 py-1.5 text-xs font-medium text-[#425466] hover:bg-[#f6f9fc]"
+                >
+                    <span x-show="!copied">Copy</span>
+                    <span x-show="copied" x-cloak>Copied!</span>
+                </button>
+            </div>
         </div>
     @endif
 
@@ -21,6 +31,7 @@
             </div>
 
             <div class="w-40">
+                <span class="mb-1.5 block text-sm font-medium text-transparent select-none" aria-hidden="true">&nbsp;</span>
                 <x-form.button type="submit">Create token</x-form.button>
             </div>
         </form>

@@ -1,4 +1,4 @@
-.PHONY: help up down build shell migrate seed test logs fresh pint stan lint-js format-js validate artisan composer npm dusk dusk-setup dusk-headed ssl-cert
+.PHONY: help up down build shell migrate seed test logs fresh pint stan lint-js format-js validate artisan composer npm dusk dusk-setup dusk-headed ssl-cert dev
 
 EXEC = docker compose exec -u $(shell id -u):$(shell id -g) -e HOME=/tmp app
 
@@ -16,6 +16,9 @@ build: ## docker compose build
 
 shell: ## exec into the app container
 	@$(EXEC) sh
+
+dev: ## run php artisan dev (server, queue listener, vite) inside the container
+	@$(EXEC) php artisan dev
 
 migrate: ## run artisan migrate
 	@$(EXEC) php artisan migrate

@@ -34,6 +34,18 @@ it('creates a token and shows the plain text value once', function () {
     expect($user->tokens()->where('name', 'Claude Desktop')->exists())->toBeTrue();
 });
 
+it('offers a copy button alongside the newly created plain text token', function () {
+    $organisation = Organisation::factory()->create();
+    $user = User::factory()->create(['organisation_id' => $organisation->id]);
+
+    $this->actingAs($user)
+        ->followingRedirects()
+        ->post(route('settings.tokens.store'), ['name' => 'Claude Desktop'])
+        ->assertOk()
+        ->assertSee('Copy')
+        ->assertSee('Copied!');
+});
+
 it('fails validation when the token name is missing', function () {
     $organisation = Organisation::factory()->create();
     $user = User::factory()->create(['organisation_id' => $organisation->id]);
