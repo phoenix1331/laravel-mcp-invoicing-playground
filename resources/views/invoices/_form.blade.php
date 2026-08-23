@@ -31,54 +31,56 @@
         },
     }"
 >
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div>
-            <label for="customer_id" class="mb-1.5 block text-sm font-medium text-[#0a2540]">Customer</label>
-            <select
-                id="customer_id"
-                name="customer_id"
-                required
-                class="block w-full rounded-md border border-[#e3e8ee] px-3 py-2 text-sm text-[#0a2540] shadow-sm focus:border-[#f87171] focus:outline-none focus:ring-1 focus:ring-[#f87171]"
-            >
-                @foreach ($customers as $customer)
-                    <option value="{{ $customer->id }}" @selected(old('customer_id', $invoice->customer_id ?? null) == $customer->id)>
-                        {{ $customer->name }}
-                    </option>
-                @endforeach
-            </select>
-            @error('customer_id')
-                <p class="mt-1.5 text-sm text-[#df1b41]">{{ $message }}</p>
-            @enderror
+    <div class="rounded-lg bg-white p-6 shadow-[0_1px_3px_rgba(10,37,64,0.08)] ring-1 ring-slate-900/5">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+                <label for="customer_id" class="mb-1.5 block text-sm font-medium text-[#0a2540]">Customer</label>
+                <select
+                    id="customer_id"
+                    name="customer_id"
+                    required
+                    class="block w-full rounded-md border border-[#e3e8ee] bg-white px-3 py-2 text-sm text-[#0a2540] shadow-sm focus:border-[#f87171] focus:outline-none focus:ring-1 focus:ring-[#f87171]"
+                >
+                    @foreach ($customers as $customer)
+                        <option value="{{ $customer->id }}" @selected(old('customer_id', $invoice->customer_id ?? null) == $customer->id)>
+                            {{ $customer->name }}
+                        </option>
+                    @endforeach
+                </select>
+                @error('customer_id')
+                    <p class="mt-1.5 text-sm text-[#df1b41]">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <x-form.input label="Currency" name="currency" value="{{ old('currency', $invoice->currency ?? 'GBP') }}" required />
+            <x-form.input label="Issue date" name="issue_date" type="date" value="{{ old('issue_date', optional($invoice?->issue_date)->format('Y-m-d')) }}" required />
+            <x-form.input label="Due date" name="due_date" type="date" value="{{ old('due_date', optional($invoice?->due_date)->format('Y-m-d')) }}" required />
+
+            <div>
+                <label for="tax_rate" class="mb-1.5 block text-sm font-medium text-[#0a2540]">Tax rate (%)</label>
+                <input
+                    id="tax_rate"
+                    name="tax_rate"
+                    type="number"
+                    step="0.01"
+                    x-model="taxRate"
+                    class="block w-full rounded-md border border-[#e3e8ee] bg-white px-3 py-2 text-sm text-[#0a2540] shadow-sm focus:border-[#f87171] focus:outline-none focus:ring-1 focus:ring-[#f87171]"
+                >
+                @error('tax_rate')
+                    <p class="mt-1.5 text-sm text-[#df1b41]">{{ $message }}</p>
+                @enderror
+            </div>
         </div>
 
-        <x-form.input label="Currency" name="currency" value="{{ old('currency', $invoice->currency ?? 'GBP') }}" required />
-        <x-form.input label="Issue date" name="issue_date" type="date" value="{{ old('issue_date', optional($invoice?->issue_date)->format('Y-m-d')) }}" required />
-        <x-form.input label="Due date" name="due_date" type="date" value="{{ old('due_date', optional($invoice?->due_date)->format('Y-m-d')) }}" required />
-
-        <div>
-            <label for="tax_rate" class="mb-1.5 block text-sm font-medium text-[#0a2540]">Tax rate (%)</label>
-            <input
-                id="tax_rate"
-                name="tax_rate"
-                type="number"
-                step="0.01"
-                x-model="taxRate"
-                class="block w-full rounded-md border border-[#e3e8ee] px-3 py-2 text-sm text-[#0a2540] shadow-sm focus:border-[#f87171] focus:outline-none focus:ring-1 focus:ring-[#f87171]"
-            >
-            @error('tax_rate')
-                <p class="mt-1.5 text-sm text-[#df1b41]">{{ $message }}</p>
-            @enderror
+        <div class="mt-4">
+            <label for="notes" class="mb-1.5 block text-sm font-medium text-[#0a2540]">Notes</label>
+            <textarea
+                id="notes"
+                name="notes"
+                rows="3"
+                class="block w-full rounded-md border border-[#e3e8ee] bg-white px-3 py-2 text-sm text-[#0a2540] shadow-sm focus:border-[#f87171] focus:outline-none focus:ring-1 focus:ring-[#f87171]"
+            >{{ old('notes', $invoice->notes ?? '') }}</textarea>
         </div>
-    </div>
-
-    <div class="mt-4">
-        <label for="notes" class="mb-1.5 block text-sm font-medium text-[#0a2540]">Notes</label>
-        <textarea
-            id="notes"
-            name="notes"
-            rows="3"
-            class="block w-full rounded-md border border-[#e3e8ee] px-3 py-2 text-sm text-[#0a2540] shadow-sm focus:border-[#f87171] focus:outline-none focus:ring-1 focus:ring-[#f87171]"
-        >{{ old('notes', $invoice->notes ?? '') }}</textarea>
     </div>
 
     <h2 class="mt-8 text-lg font-semibold text-[#0a2540]">Line items</h2>

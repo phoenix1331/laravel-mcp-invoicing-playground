@@ -5,6 +5,13 @@
         'paid' => 'bg-emerald-50 text-emerald-700',
         'void' => 'bg-amber-50 text-amber-700',
     ];
+
+    $logoDataUri = null;
+
+    if ($invoice->organisation->logo_path && Storage::disk('public')->exists($invoice->organisation->logo_path)) {
+        $logoDataUri = 'data:'.Storage::disk('public')->mimeType($invoice->organisation->logo_path).';base64,'
+            .base64_encode(Storage::disk('public')->get($invoice->organisation->logo_path));
+    }
 @endphp
 
 <div class="rounded-lg bg-white p-8 shadow-[0_1px_3px_rgba(10,37,64,0.08)] ring-1 ring-slate-900/5">
@@ -17,6 +24,13 @@
         </div>
 
         <div class="text-right text-sm text-[#425466]">
+            @if ($logoDataUri)
+                <img
+                    src="{{ $logoDataUri }}"
+                    alt="{{ $invoice->organisation->name }} logo"
+                    class="ml-auto mb-2 h-12 w-12 rounded-md object-cover"
+                >
+            @endif
             <p class="font-medium text-[#0a2540]">{{ $invoice->organisation->name }}</p>
             @if ($invoice->organisation->address)
                 <p>{{ $invoice->organisation->address }}</p>

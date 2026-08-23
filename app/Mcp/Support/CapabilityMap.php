@@ -34,6 +34,8 @@ class CapabilityMap
         'invoices.mark-paid' => 'invoices.mark_paid',
         'invoices.void' => 'invoices.void',
         'invoices.pdf' => 'invoices.download_pdf',
+
+        'settings.organisation.update' => 'organisation.update',
     ];
 
     /**
@@ -78,6 +80,7 @@ class CapabilityMap
         'customers.edit' => 'Form view for the customers.update capability, already mapped',
         'invoices.create' => 'Form view for the invoices.store capability, already mapped',
         'invoices.edit' => 'Form view for the invoices.update capability, already mapped',
+        'settings.organisation' => 'Form view for the settings.organisation.update capability, already mapped',
 
         // Dashboard: a UI aggregation of reports.summary/reports.aging tool
         // data, not a distinct write or read capability of its own.

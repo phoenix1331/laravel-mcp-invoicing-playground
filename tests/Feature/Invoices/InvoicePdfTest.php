@@ -89,6 +89,36 @@ it('reuses the cached pdf when the invoice has not changed', function () {
     expect(Storage::disk('local')->lastModified($path))->toBe($firstModifiedAt);
 });
 
+it('embeds the organisation logo as a data uri when one is set', function () {
+    Storage::fake('public');
+
+    $logoContents = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=');
+    Storage::disk('public')->put('organisations/1/logo.png', $logoContents);
+    $this->acme->update(['logo_path' => 'organisations/1/logo.png']);
+
+    $invoice = Invoice::factory()->create([
+        'organisation_id' => $this->acme->id,
+        'customer_id' => $this->customer->id,
+    ]);
+    InvoiceLine::factory()->for($invoice)->create();
+
+    $html = view('pdf.invoice', ['invoice' => $invoice->load(['lines', 'customer', 'organisation'])])->render();
+
+    expect($html)->toContain('data:image/png;base64,'.base64_encode($logoContents));
+});
+
+it('omits the logo image entirely when the organisation has none', function () {
+    $invoice = Invoice::factory()->create([
+        'organisation_id' => $this->acme->id,
+        'customer_id' => $this->customer->id,
+    ]);
+    InvoiceLine::factory()->for($invoice)->create();
+
+    $html = view('pdf.invoice', ['invoice' => $invoice->load(['lines', 'customer', 'organisation'])])->render();
+
+    expect($html)->not->toContain('<img');
+});
+
 it('regenerates the pdf when the invoice changes', function () {
     $invoice = Invoice::factory()->create([
         'organisation_id' => $this->acme->id,

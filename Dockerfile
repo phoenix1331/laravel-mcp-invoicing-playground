@@ -20,8 +20,15 @@ RUN apt-get update \
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
+RUN groupadd --gid 1000 app \
+    && useradd --uid 1000 --gid app --shell /bin/sh --create-home app \
+    && mkdir -p /data /config \
+    && chown -R app:app /data /config
+
 WORKDIR /app
 
-COPY . /app
+COPY --chown=app:app . /app
+
+USER app
 
 ENV SERVER_NAME="http://localhost:8000, https://localhost:443"

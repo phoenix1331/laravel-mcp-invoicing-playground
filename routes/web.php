@@ -7,6 +7,7 @@ use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\InvoicePdfDownloadController;
 use App\Http\Controllers\McpAuditLogController;
 use App\Http\Controllers\McpConsoleController;
+use App\Http\Controllers\OrganisationSettingsController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -28,6 +29,9 @@ Route::middleware('auth')->scopeBindings()->group(function () {
     Route::post('/invoices/{invoice}/mark-paid', [InvoiceController::class, 'markPaid'])->name('invoices.mark-paid');
     Route::post('/invoices/{invoice}/void', [InvoiceController::class, 'void'])->name('invoices.void');
     Route::get('/invoices/{invoice}/pdf', [InvoiceController::class, 'downloadPdf'])->name('invoices.pdf');
+
+    Route::get('/settings/organisation', [OrganisationSettingsController::class, 'edit'])->name('settings.organisation');
+    Route::put('/settings/organisation', [OrganisationSettingsController::class, 'update'])->name('settings.organisation.update');
 
     Route::get('/settings/tokens', [ApiTokenController::class, 'index'])->name('settings.tokens');
     Route::post('/settings/tokens', [ApiTokenController::class, 'store'])->name('settings.tokens.store');

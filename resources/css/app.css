@@ -48,4 +48,18 @@
     [x-cloak] {
         display: none !important;
     }
+
+    button:not(:disabled),
+    [role='button']:not(:disabled),
+    summary,
+    select,
+    input[type='checkbox'],
+    input[type='radio'] {
+        cursor: pointer;
+    }
+
+    button:disabled,
+    [role='button']:disabled {
+        cursor: not-allowed;
+    }
 }

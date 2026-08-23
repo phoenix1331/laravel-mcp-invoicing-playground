@@ -29,8 +29,8 @@
         @endcan
     </div>
 
-    <form method="GET" action="{{ route('invoices.index') }}" class="mt-6 grid grid-cols-1 gap-4 rounded-lg bg-white p-4 shadow-[0_1px_3px_rgba(10,37,64,0.08)] ring-1 ring-slate-900/5 sm:grid-cols-5">
-        <div class="sm:col-span-2">
+    <form method="GET" action="{{ route('invoices.index') }}" class="mt-6 grid grid-cols-1 gap-4 rounded-lg bg-white p-4 shadow-[0_1px_3px_rgba(10,37,64,0.08)] ring-1 ring-slate-900/5 sm:grid-cols-2 lg:grid-cols-6">
+        <div class="lg:col-span-2">
             <input
                 type="text"
                 name="search"
@@ -54,22 +54,20 @@
             @endforeach
         </select>
 
-        <div class="flex gap-2">
-            <input
-                type="date"
-                name="from"
-                value="{{ request('from') }}"
-                class="block w-full rounded-md border border-[#e3e8ee] px-3 py-2 text-sm text-[#0a2540] focus:border-[#f87171] focus:outline-none focus:ring-1 focus:ring-[#f87171]"
-            >
-            <input
-                type="date"
-                name="to"
-                value="{{ request('to') }}"
-                class="block w-full rounded-md border border-[#e3e8ee] px-3 py-2 text-sm text-[#0a2540] focus:border-[#f87171] focus:outline-none focus:ring-1 focus:ring-[#f87171]"
-            >
-        </div>
+        <input
+            type="date"
+            name="from"
+            value="{{ request('from') }}"
+            class="block w-full rounded-md border border-[#e3e8ee] px-3 py-2 text-sm text-[#0a2540] focus:border-[#f87171] focus:outline-none focus:ring-1 focus:ring-[#f87171]"
+        >
+        <input
+            type="date"
+            name="to"
+            value="{{ request('to') }}"
+            class="block w-full rounded-md border border-[#e3e8ee] px-3 py-2 text-sm text-[#0a2540] focus:border-[#f87171] focus:outline-none focus:ring-1 focus:ring-[#f87171]"
+        >
 
-        <div class="sm:col-span-5 flex justify-end gap-3">
+        <div class="sm:col-span-2 lg:col-span-6 flex justify-end gap-3">
             <a href="{{ route('invoices.index') }}" class="rounded-md border border-[#e3e8ee] bg-white px-4 py-2 text-sm font-medium text-[#0a2540] hover:bg-[#f6f9fc]">
                 Clear
             </a>
