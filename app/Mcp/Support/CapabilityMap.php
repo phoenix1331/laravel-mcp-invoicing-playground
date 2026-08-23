@@ -90,6 +90,10 @@ class CapabilityMap
         'settings.tokens.store' => 'Session-based credential management; not applicable to an MCP client',
         'settings.tokens.destroy' => 'Session-based credential management; not applicable to an MCP client',
 
+        // MCP console: introspects the server catalogue for a human, not a
+        // capability an MCP client would call on itself.
+        'settings.mcp' => 'UI introspection of this server catalogue; not applicable to an MCP client',
+
         // Framework/infrastructure routes with no domain capability.
         'storage.local' => 'Laravel storage symlink passthrough, not an application route',
         'storage.local.upload' => 'Laravel storage symlink passthrough, not an application route',

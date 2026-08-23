@@ -4,6 +4,7 @@ use App\Http\Controllers\ApiTokenController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\McpConsoleController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -25,4 +26,6 @@ Route::middleware('auth')->scopeBindings()->group(function () {
     Route::get('/settings/tokens', [ApiTokenController::class, 'index'])->name('settings.tokens');
     Route::post('/settings/tokens', [ApiTokenController::class, 'store'])->name('settings.tokens.store');
     Route::delete('/settings/tokens/{token}', [ApiTokenController::class, 'destroy'])->name('settings.tokens.destroy');
+
+    Route::get('/settings/mcp', McpConsoleController::class)->name('settings.mcp');
 });
