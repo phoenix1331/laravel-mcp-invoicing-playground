@@ -120,6 +120,8 @@ jobs:
     name: e2e (dusk)
     runs-on: ubuntu-latest
     needs: lint
+    env:
+      DB_HOST: 127.0.0.1
     services:
       mysql:
         image: mysql:8.4
