@@ -12,7 +12,10 @@ namespace App\Mcp\Concerns;
  * that was never registered.
  *
  * Governed by config('mcp.writes_enabled') / MCP_WRITES_ENABLED, the kill
- * switch for the whole write surface at once.
+ * switch for the whole write surface at once. See App\Mcp\Support\WriteTools
+ * for the corresponding static list of write tool names, used where the
+ * throttle:mcp rate limiter needs to identify a write call without
+ * resolving an actual tool instance.
  */
 trait IsWriteTool
 {
