@@ -206,6 +206,46 @@ jobs:
           name: dusk-console
           path: tests/Browser/console
 
+  auth-audit:
+    name: auth audit
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      - name: cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+
+      - name: install composer dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: copy env
+        run: cp .env.example .env
+
+      - name: generate app key
+        run: php artisan key:generate
+
+      - name: run auth-audit
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+        run: php artisan auth-audit:run --min=90 --html=storage/auth-audit/report.html --compare=auth-audit-baseline.json
+
+      - name: upload html report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: auth-audit-report
+          path: storage/auth-audit/report.html
+
   docs:
     name: build & deploy docs
     runs-on: ubuntu-latest
