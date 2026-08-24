@@ -6,6 +6,7 @@ namespace App\Mcp\Tools;
 
 use App\Enums\InvoiceStatus;
 use App\Mcp\Concerns\AuthorizesToolAccess;
+use App\Mcp\Support\UntrustedText;
 use App\Models\Invoice;
 use App\Models\InvoiceLine;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
@@ -91,26 +92,26 @@ class GetInvoice extends Tool
             'issue_date' => $invoice->issue_date->toDateString(),
             'due_date' => $invoice->due_date->toDateString(),
             'currency' => $invoice->currency,
-            'notes' => $invoice->notes,
+            'notes' => UntrustedText::wrap($invoice->notes),
             'subtotal' => (float) $invoice->subtotal,
             'tax_rate' => (float) $invoice->tax_rate,
             'tax_total' => (float) $invoice->tax_total,
             'total' => (float) $invoice->total,
             'customer' => [
                 'id' => $customer->id,
-                'name' => $customer->name,
-                'email' => $customer->email,
+                'name' => UntrustedText::wrap($customer->name),
+                'email' => UntrustedText::wrap($customer->email),
             ],
             'lines' => $invoice->lines->map(fn (InvoiceLine $line): array => [
                 'id' => $line->id,
-                'description' => $line->description,
+                'description' => UntrustedText::wrap($line->description),
                 'quantity' => (float) $line->quantity,
                 'unit_price' => (float) $line->unit_price,
                 'line_total' => (float) $line->line_total,
             ])->all(),
         ];
 
-        $summary = Response::text("Invoice {$invoice->number} ({$invoice->status->value}) for {$customer->name}: {$invoice->currency} {$invoice->total}.");
+        $summary = Response::text("Invoice {$invoice->number} ({$invoice->status->value}) for ".UntrustedText::wrap($customer->name).": {$invoice->currency} {$invoice->total}.");
 
         return Response::make($summary)->withStructuredContent($data);
     }

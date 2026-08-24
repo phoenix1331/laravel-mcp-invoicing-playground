@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Mcp\Tools;
 
 use App\Mcp\Concerns\AuthorizesToolAccess;
+use App\Mcp\Support\UntrustedText;
 use App\Models\Customer;
 use App\Models\Invoice;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
@@ -71,9 +72,9 @@ class GetCustomer extends Tool
 
         $data = [
             'id' => $customer->id,
-            'name' => $customer->name,
-            'email' => $customer->email,
-            'address' => $customer->address,
+            'name' => UntrustedText::wrap($customer->name),
+            'email' => UntrustedText::wrap($customer->email),
+            'address' => UntrustedText::wrap($customer->address),
             'invoices' => $customer->invoices->map(fn (Invoice $invoice): array => [
                 'id' => $invoice->id,
                 'number' => $invoice->number,
@@ -83,7 +84,7 @@ class GetCustomer extends Tool
             ])->all(),
         ];
 
-        $summary = Response::text("Customer {$customer->name} has {$customer->invoices->count()} invoice(s).");
+        $summary = Response::text('Customer '.UntrustedText::wrap($customer->name)." has {$customer->invoices->count()} invoice(s).");
 
         return Response::make($summary)->withStructuredContent($data);
     }

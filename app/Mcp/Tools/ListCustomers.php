@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Mcp\Tools;
 
 use App\Mcp\Concerns\AuthorizesToolAccess;
+use App\Mcp\Support\UntrustedText;
 use App\Models\Customer;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
@@ -67,9 +68,9 @@ class ListCustomers extends Tool
 
         $customers = $paginator->getCollection()->map(fn (Customer $customer): array => [
             'id' => $customer->id,
-            'name' => $customer->name,
-            'email' => $customer->email,
-            'address' => $customer->address,
+            'name' => UntrustedText::wrap($customer->name),
+            'email' => UntrustedText::wrap($customer->email),
+            'address' => UntrustedText::wrap($customer->address),
             'invoices_count' => $customer->invoices_count,
         ])->all();
 

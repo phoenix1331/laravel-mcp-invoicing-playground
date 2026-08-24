@@ -6,6 +6,7 @@ namespace App\Mcp\Tools;
 
 use App\Enums\InvoiceStatus;
 use App\Mcp\Concerns\AuthorizesToolAccess;
+use App\Mcp\Support\UntrustedText;
 use App\Models\Invoice;
 use Generator;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
@@ -111,7 +112,7 @@ class ListInvoices extends Tool
                 'number' => $invoice->number,
                 'status' => $invoice->status->value,
                 'customer_id' => $invoice->customer_id,
-                'customer_name' => $customer->name,
+                'customer_name' => UntrustedText::wrap($customer->name),
                 'issue_date' => $invoice->issue_date->toDateString(),
                 'due_date' => $invoice->due_date->toDateString(),
                 'total' => (float) $invoice->total,
