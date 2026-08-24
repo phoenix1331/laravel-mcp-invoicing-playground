@@ -188,19 +188,35 @@ jobs:
       - name: reset login throttle for seeded accounts
         run: php artisan dusk:reset-login-throttle
 
+      # GitHub's runner image tracks whatever Chrome stable ships that week,
+      # and Chrome has shipped real regressions mid-image before that GitHub
+      # won't roll back (see actions/runner-images#14169: a Chrome update
+      # silently broke WebDriver keyboard input while every WebDriver command
+      # kept reporting success - not a timing issue, an upstream browser bug).
+      # Pinning to an exact, immutable Chrome for Testing build sidesteps
+      # that entirely instead of trusting the runner's system Chrome.
+      - name: install pinned chrome
+        id: setup-chrome
+        uses: browser-actions/setup-chrome@v2
+        with:
+          chrome-version: '152.0.7977.54'
+          install-dependencies: true
+
       - name: cache chrome driver
         uses: actions/cache@v4
         with:
           path: ~/.cache/puppeteer
-          key: chromedriver-${{ runner.os }}
+          key: chromedriver-152.0.7977.54
 
-      - name: install chromedriver
-        run: php artisan dusk:chrome-driver --detect
+      - name: install matching chromedriver
+        run: php artisan dusk:chrome-driver 152.0.7977.54
 
       - name: start the app server
         run: php artisan serve --no-reload &
 
       - name: run dusk
+        env:
+          DUSK_CHROME_BINARY: ${{ steps.setup-chrome.outputs.chrome-path }}
         run: php artisan dusk
 
       - name: upload screenshots on failure
