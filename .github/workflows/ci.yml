@@ -369,7 +369,7 @@ jobs:
           DB_DATABASE: ':memory:'
         run: php artisan docs:capability-map
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: docs
 
