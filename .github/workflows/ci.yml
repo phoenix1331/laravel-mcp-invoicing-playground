@@ -214,9 +214,17 @@ jobs:
       - name: start the app server
         run: php artisan serve --no-reload &
 
+      # DUSK_DEBUG_TYPING is temporary diagnostic instrumentation (see
+      # tests/DuskTestCase.php's typeReliably() macro) - three separate fixes
+      # (login throttle, retry-loop typing, pinned Chrome version) have each
+      # individually taken effect in CI and the same "field stays empty"
+      # failure survived all three, so this logs what WebDriver actually sees
+      # at the moment a type attempt fails, to find the real cause instead of
+      # guessing again. Remove once the root cause is found and fixed.
       - name: run dusk
         env:
           DUSK_CHROME_BINARY: ${{ steps.setup-chrome.outputs.chrome-path }}
+          DUSK_DEBUG_TYPING: '1'
         run: php artisan dusk
 
       - name: upload screenshots on failure
