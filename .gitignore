@@ -13,6 +13,7 @@
 /.vscode
 /.zed
 /auth.json
+/docs/data/capability-map.json
 /node_modules
 /public/build
 /public/fonts-manifest.dev.json
