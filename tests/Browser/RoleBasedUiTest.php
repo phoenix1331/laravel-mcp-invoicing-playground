@@ -9,7 +9,13 @@ use Laravel\Dusk\Browser;
 function loginAsDuskUser(Browser $browser, string $email): void
 {
     $browser->visit('/login')
-        ->waitFor('input[name="email"]', 10)
+        ->waitFor('input[name="email"]', 10);
+
+    // The field exists in the DOM as soon as waitFor resolves, but on a
+    // resource-constrained CI runner it can take a little longer to become
+    // genuinely interactive/focusable - type() can race ahead of that and
+    // silently type into nothing. A short pause here is cheap insurance.
+    $browser->pause(250)
         ->type('email', $email)
         ->type('password', 'password');
 

@@ -7,7 +7,12 @@ use Laravel\Dusk\Browser;
 test('a member creates an invoice, sends it, marks it paid, and it becomes immutable', function () {
     $this->browse(function (Browser $browser) {
         $browser->visit('/login')
-            ->waitFor('input[name="email"]', 10)
+            ->waitFor('input[name="email"]', 10);
+
+        // See RoleBasedUiTest's loginAsDuskUser() for why this pause exists:
+        // the field can be present in the DOM before it's genuinely
+        // interactive on a resource-constrained CI runner.
+        $browser->pause(250)
             ->type('email', 'user2@email.com')
             ->type('password', 'password');
 
@@ -21,7 +26,8 @@ test('a member creates an invoice, sends it, marks it paid, and it becomes immut
 
         $browser->visit('/invoices/create')
             ->assertSee('New invoice')
-            ->waitFor('input[name="lines[0][description]"]', 10);
+            ->waitFor('input[name="lines[0][description]"]', 10)
+            ->pause(250);
 
         $browser->script([
             "document.querySelector('input[name=issue_date]').value = '2026-01-01'",
