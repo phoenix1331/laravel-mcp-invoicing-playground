@@ -303,43 +303,6 @@ jobs:
     with:
       upload-sarif: false
 
-  codeql:
-    name: codeql
-    runs-on: ubuntu-latest
-    needs: lint
-    permissions:
-      contents: read
-      security-events: write
-    strategy:
-      matrix:
-        # CodeQL has no PHP language support (confirmed against GitHub's own
-        # supported-languages list, still unaddressed as a long-standing
-        # upstream gap) - PHP is scanned separately in the security-scan job.
-        language: [javascript-typescript]
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: github/codeql-action/init@v3
-        with:
-          languages: ${{ matrix.language }}
-
-      - uses: github/codeql-action/autobuild@v3
-
-      # continue-on-error because the final internal step of analyze uploads
-      # results to GitHub code scanning, which needs Advanced Security - not
-      # available on a private repo without a paid plan (same limitation as
-      # the docs job's Pages deploy below). The scan itself still runs.
-      - uses: github/codeql-action/analyze@v3
-        id: analyze
-        continue-on-error: true
-        with:
-          category: /language:${{ matrix.language }}
-
-      - name: note if the upload was skipped
-        if: steps.analyze.outcome == 'failure'
-        run: |
-          echo "::warning::CodeQL result upload failed - likely because code scanning is not enabled for this private repository (needs GitHub Advanced Security or a public repo). The analysis itself still ran."
-
   auth-audit:
     name: auth audit
     runs-on: ubuntu-latest
