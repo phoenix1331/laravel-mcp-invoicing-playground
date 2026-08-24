@@ -113,6 +113,9 @@ jobs:
       - name: generate app key
         run: php artisan key:generate
 
+      - name: generate passport keys
+        run: php artisan passport:keys
+
       - name: run pest
         run: ./vendor/bin/pest
 
