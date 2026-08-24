@@ -376,7 +376,7 @@ jobs:
       - name: deploy to github pages
         id: deployment
         continue-on-error: true
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 
       - name: note if the deploy was skipped
         if: steps.deployment.outcome == 'failure'
