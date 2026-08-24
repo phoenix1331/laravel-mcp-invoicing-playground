@@ -1,4 +1,4 @@
-.PHONY: help up down build shell migrate seed test logs fresh pint stan lint-js format-js validate artisan composer npm dusk dusk-setup dusk-headed ssl-cert dev storage-link capability-map
+.PHONY: help up down build shell migrate seed test logs fresh pint stan lint-js format-js validate artisan composer npm dusk dusk-setup dusk-headed ssl-cert dev storage-link capability-map docs-preview
 
 EXEC = docker compose exec -u $(shell id -u):$(shell id -g) -e HOME=/tmp app
 
@@ -25,6 +25,9 @@ storage-link: ## create the public/storage symlink (needed for organisation logo
 
 capability-map: ## regenerate docs/data/capability-map.json from the live mcp server catalogue
 	@$(EXEC) php artisan docs:capability-map
+
+docs-preview: ## serve docs/ locally on the host at http://localhost:8899 (Ctrl+C to stop)
+	@cd docs && python3 -m http.server 8899
 
 migrate: ## run artisan migrate
 	@$(EXEC) php artisan migrate

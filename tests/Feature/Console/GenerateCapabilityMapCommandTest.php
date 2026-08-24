@@ -7,9 +7,17 @@ use Laravel\Mcp\Server\Transport\FakeTransporter;
 
 beforeEach(function () {
     $this->path = base_path('docs/data/capability-map.json');
+    $this->existedBefore = file_exists($this->path);
+    $this->originalContents = $this->existedBefore ? file_get_contents($this->path) : null;
 });
 
 afterEach(function () {
+    if ($this->existedBefore) {
+        file_put_contents($this->path, $this->originalContents);
+
+        return;
+    }
+
     if (file_exists($this->path)) {
         unlink($this->path);
         @rmdir(dirname($this->path));

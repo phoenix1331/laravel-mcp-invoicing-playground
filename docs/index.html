@@ -1,0 +1,1134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Laravel MCP Invoicing Playground</title>
+<meta name="description" content="A small but genuinely complete SaaS product where every capability in the UI has a corresponding MCP primitive, enforced by an automated parity test.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --color-page: #ffffff;
+    --color-shell: #f6f9fc;
+    --color-surface: #ffffff;
+    --color-border: #e3e8ee;
+    --color-primary: #f87171;
+    --color-primary-hover: #ef4444;
+    --color-heading: #0a2540;
+    --color-body: #425466;
+    --color-muted: #8792a2;
+    --color-success: #0e9f6e;
+    --color-success-bg: #e3f9ed;
+    --color-warning: #d97706;
+    --color-danger: #df1b41;
+    --color-danger-bg: #fff5f5;
+    --radius-input: 6px;
+    --radius-card: 8px;
+    --shadow-card: 0 1px 3px rgba(10, 37, 64, 0.08);
+    --shadow-elevated: 0 4px 12px rgba(10, 37, 64, 0.12);
+    color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+body {
+    margin: 0;
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    background: var(--color-shell);
+    color: var(--color-body);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--color-primary); }
+a:hover { color: var(--color-primary-hover); }
+
+:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+.container {
+    max-width: 1080px;
+    margin-inline: auto;
+    padding-inline: 1.5rem;
+}
+
+h1, h2, h3 { color: var(--color-heading); margin: 0; }
+
+section { padding-block: 4rem; }
+section:first-of-type { padding-top: 0; }
+
+.eyebrow {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-primary);
+}
+
+.section-heading {
+    font-size: 1.75rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+.section-intro {
+    max-width: 640px;
+    margin-top: 0.75rem;
+    color: var(--color-body);
+}
+
+.card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: var(--radius-input);
+    padding: 0.65rem 1.25rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-primary {
+    background: var(--color-primary);
+    color: #ffffff;
+}
+.btn-primary:hover { background: var(--color-primary-hover); color: #ffffff; }
+
+.btn-secondary {
+    background: transparent;
+    border-color: var(--color-border);
+    color: var(--color-heading);
+}
+.btn-secondary:hover { background: var(--color-shell); }
+
+code, pre {
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 0.85em;
+}
+
+pre {
+    background: var(--color-heading);
+    color: #e3e8ee;
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius-card);
+    overflow-x: auto;
+    margin: 0;
+}
+
+/* header / nav */
+header.site-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.site-header .container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block: 0.85rem;
+}
+
+.brand {
+    font-weight: 700;
+    color: var(--color-heading);
+    text-decoration: none;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+}
+
+.site-header nav {
+    min-width: 0;
+    overflow-x: auto;
+}
+
+.site-nav {
+    display: flex;
+    gap: 1.5rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    width: max-content;
+}
+
+.site-nav li { flex-shrink: 0; }
+
+.site-nav a {
+    color: var(--color-body);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+.site-nav a:hover { color: var(--color-primary); }
+
+/* hero */
+.hero {
+    padding-top: 0;
+    padding-bottom: 4rem;
+    background:
+        radial-gradient(60% 60% at 15% 0%, color-mix(in srgb, var(--color-primary) 14%, transparent), transparent 70%),
+        radial-gradient(50% 60% at 100% 10%, color-mix(in srgb, #635bff 12%, transparent), transparent 70%);
+}
+
+.hero .container { padding-top: 3.5rem; }
+
+.hero h1 {
+    font-size: clamp(2rem, 4.5vw, 3rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    max-width: 780px;
+}
+
+.hero p.pitch {
+    margin-top: 1.25rem;
+    font-size: 1.15rem;
+    max-width: 640px;
+    color: var(--color-body);
+}
+
+.hero .cta-row {
+    margin-top: 2rem;
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+/* the idea */
+.idea-grid {
+    margin-top: 2.5rem;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+
+@media (max-width: 780px) {
+    .idea-grid { grid-template-columns: 1fr; }
+}
+
+.idea-card {
+    padding: 1.5rem;
+}
+
+.idea-card .icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 8px;
+    background: var(--color-shell);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    color: var(--color-primary);
+}
+
+.idea-card h3 {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.idea-card p {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+}
+
+/* diagram */
+.diagram-wrap {
+    margin-top: 2rem;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    padding: 1.5rem;
+}
+
+.diagram-wrap svg { display: block; min-width: 640px; width: 100%; height: auto; }
+
+/* tool catalogue */
+.filter-row {
+    margin-top: 2rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.filter-chip {
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-body);
+    border-radius: 999px;
+    padding: 0.4rem 0.9rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.filter-chip[aria-pressed="true"] {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: #ffffff;
+}
+
+.tool-list {
+    margin-top: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.tool-item {
+    overflow: hidden;
+}
+
+.tool-item summary {
+    cursor: pointer;
+    list-style: none;
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    justify-content: space-between;
+}
+.tool-item summary::-webkit-details-marker { display: none; }
+
+.tool-item summary .tool-name-group { display: flex; align-items: baseline; gap: 0.75rem; flex-wrap: wrap; }
+
+.tool-item code.tool-name { color: var(--color-heading); font-weight: 600; font-size: 0.9rem; }
+
+.tool-item .tool-desc { color: var(--color-muted); font-size: 0.85rem; }
+
+.badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+.badge-read { background: #e0e7ff; color: #4338ca; }
+.badge-write { background: var(--color-danger-bg); color: var(--color-danger); }
+
+.tool-item .schema-body {
+    border-top: 1px solid var(--color-border);
+    padding: 1rem 1.25rem;
+}
+
+.tool-item .schema-body h4 {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-muted);
+    margin: 0 0 0.4rem;
+    font-weight: 600;
+}
+
+.tool-item .schema-body pre {
+    margin-bottom: 1rem;
+}
+.tool-item .schema-body pre:last-child { margin-bottom: 0; }
+
+/* parity matrix */
+.parity-summary {
+    margin-top: 1.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--color-success-bg);
+    color: var(--color-success);
+    border-radius: 999px;
+    padding: 0.4rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.table-wrap {
+    margin-top: 1.5rem;
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+th, td {
+    text-align: left;
+    padding: 0.65rem 1rem;
+    border-bottom: 1px solid var(--color-border);
+    white-space: nowrap;
+}
+
+th {
+    color: var(--color-muted);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+
+.check { color: var(--color-success); }
+.cross { color: var(--color-danger); }
+
+.ci-note {
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    color: var(--color-muted);
+}
+
+/* security cards */
+.security-grid {
+    margin-top: 2rem;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+}
+
+@media (max-width: 900px) {
+    .security-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+    .security-grid { grid-template-columns: 1fr; }
+}
+
+.security-card {
+    padding: 1.25rem;
+}
+
+.security-card h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.security-card p {
+    margin-top: 0.4rem;
+    font-size: 0.85rem;
+}
+
+/* auth coverage */
+.coverage-wrap {
+    margin-top: 2rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    align-items: center;
+}
+
+@media (max-width: 780px) {
+    .coverage-wrap { grid-template-columns: 1fr; }
+}
+
+.coverage-placeholder {
+    aspect-ratio: 16 / 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-muted);
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 1.5rem;
+}
+
+.badge-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem; }
+.badge-row img { height: 20px; }
+
+/* quickstart */
+.tabs {
+    margin-top: 2rem;
+}
+
+.tab-list {
+    display: flex;
+    gap: 0.25rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.tab-btn {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-muted);
+    cursor: pointer;
+}
+
+.tab-btn[aria-selected="true"] {
+    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
+}
+
+.tab-panel { display: none; padding-top: 1.25rem; position: relative; }
+.tab-panel[data-active] { display: block; }
+
+.copy-btn {
+    position: absolute;
+    top: 1.5rem;
+    right: 0.75rem;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #e3e8ee;
+    border-radius: var(--radius-input);
+    padding: 0.3rem 0.65rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+}
+
+/* screenshots */
+.screenshot-grid {
+    margin-top: 2rem;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+}
+
+@media (max-width: 700px) {
+    .screenshot-grid { grid-template-columns: 1fr; }
+}
+
+.browser-frame {
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: var(--shadow-elevated);
+    border: 1px solid var(--color-border);
+}
+
+.browser-frame .bar {
+    background: var(--color-shell);
+    padding: 0.6rem 0.85rem;
+    display: flex;
+    gap: 0.4rem;
+}
+
+.browser-frame .bar span {
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 50%;
+    background: var(--color-border);
+}
+
+.browser-frame .shot-placeholder {
+    aspect-ratio: 16 / 10;
+    background: var(--color-surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-muted);
+    font-size: 0.8rem;
+    text-align: center;
+    padding: 1rem;
+}
+
+/* footer */
+footer.site-footer {
+    border-top: 1px solid var(--color-border);
+    padding-block: 2.5rem;
+    font-size: 0.85rem;
+    color: var(--color-muted);
+}
+
+.footer-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.footer-links {
+    display: flex;
+    gap: 1.25rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.footer-links a { color: var(--color-muted); text-decoration: none; }
+.footer-links a:hover { color: var(--color-primary); }
+
+.sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    background: var(--color-primary);
+    color: #fff;
+    padding: 0.75rem 1.25rem;
+    z-index: 50;
+    border-radius: 0 0 6px 0;
+}
+.skip-link:focus { left: 0; }
+</style>
+</head>
+<body>
+
+<a href="#main" class="skip-link">Skip to content</a>
+
+<header class="site-header">
+    <div class="container">
+        <a class="brand" href="#top">Invoicing Playground</a>
+        <nav aria-label="Primary">
+            <ul class="site-nav">
+                <li><a href="#tools">Tools</a></li>
+                <li><a href="#parity">Parity</a></li>
+                <li><a href="#security">Security</a></li>
+                <li><a href="#quickstart">Quickstart</a></li>
+                <li><a href="https://github.com/phoenix1331/laravel-mcp-invoicing-playground">GitHub</a></li>
+            </ul>
+        </nav>
+    </div>
+</header>
+
+<main id="main">
+
+<!-- 1. Hero -->
+<section class="hero" id="top">
+    <div class="container">
+        <p class="eyebrow">Laravel 13 &middot; Model Context Protocol</p>
+        <h1>An AI client can do everything a human can here, and an automated test keeps it that way.</h1>
+        <p class="pitch">
+            Invoices, customers, tenancy and roles, built the ordinary way, then exposed through MCP with the exact
+            same policies, validation and audit trail as the browser. If the two surfaces ever drift apart, CI fails.
+        </p>
+        <div class="cta-row">
+            <a class="btn btn-primary" href="https://github.com/phoenix1331/laravel-mcp-invoicing-playground">View on GitHub</a>
+            <a class="btn btn-secondary" href="#quickstart">Quickstart</a>
+        </div>
+    </div>
+</section>
+
+<!-- 2. The idea -->
+<section id="idea">
+    <div class="container">
+        <p class="eyebrow">The idea</p>
+        <h2 class="section-heading">One set of rules, two front doors</h2>
+        <p class="section-intro">The web app and the MCP server are two views onto the same domain layer, and neither one is a special case.</p>
+        <div class="idea-grid">
+            <div class="card idea-card">
+                <div class="icon" aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v5"/></svg>
+                </div>
+                <h3>Your app</h3>
+                <p>A Laravel invoicing product with real login, tenancy, roles and a PDF pipeline; nothing about it is scaffolding for the demo.</p>
+            </div>
+            <div class="card idea-card">
+                <div class="icon" aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                </div>
+                <h3>The MCP layer</h3>
+                <p>Every tool, resource and prompt goes through the same policies and Form Request validation as the controllers, kept in lockstep by a declared capability map.</p>
+            </div>
+            <div class="card idea-card">
+                <div class="icon" aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M9 13h.01M15 13h.01"/></svg>
+                </div>
+                <h3>Any AI client</h3>
+                <p>Claude Desktop, Claude Code or Cursor connect over the same Sanctum/OAuth-protected endpoint and see exactly what the signed-in user is allowed to see.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 3. Architecture diagram -->
+<section id="architecture">
+    <div class="container">
+        <p class="eyebrow">Architecture</p>
+        <h2 class="section-heading">Two paths in, one set of policies</h2>
+        <p class="section-intro">The browser and every MCP client converge on the same actions, policies and audit log: there is no side door with weaker rules.</p>
+        <div class="card diagram-wrap">
+            <svg viewBox="0 0 900 360" role="img" aria-labelledby="diagramTitle diagramDesc" xmlns="http://www.w3.org/2000/svg">
+                <title id="diagramTitle">Architecture diagram</title>
+                <desc id="diagramDesc">The browser and MCP clients (Claude Desktop, Claude Code, Cursor) both send requests through Laravel's HTTP and MCP layers, converging on shared Policies, Form Requests and Actions, which read and write one database and write to one audit log.</desc>
+                <defs>
+                    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                        <path d="M0 0L10 5L0 10Z" class="diagram-arrow-fill"></path>
+                    </marker>
+                </defs>
+                <style>
+                    .diagram-box { fill: var(--color-surface); stroke: var(--color-border); stroke-width: 1.5; }
+                    .diagram-box-accent { fill: var(--color-surface); stroke: var(--color-primary); stroke-width: 1.5; }
+                    .diagram-text { fill: var(--color-heading); font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; }
+                    .diagram-subtext { fill: var(--color-muted); font-family: 'Inter', sans-serif; font-size: 11px; }
+                    .diagram-line { stroke: var(--color-muted); stroke-width: 1.5; fill: none; }
+                    .diagram-arrow-fill { fill: var(--color-muted); }
+                </style>
+
+                <rect x="20" y="20" width="180" height="46" rx="8" class="diagram-box"/>
+                <text x="110" y="48" text-anchor="middle" class="diagram-text">Browser</text>
+
+                <rect x="20" y="150" width="180" height="46" rx="8" class="diagram-box"/>
+                <text x="110" y="172" text-anchor="middle" class="diagram-text">Claude Desktop</text>
+                <text x="110" y="187" text-anchor="middle" class="diagram-subtext">OAuth 2.1</text>
+
+                <rect x="20" y="210" width="180" height="46" rx="8" class="diagram-box"/>
+                <text x="110" y="232" text-anchor="middle" class="diagram-text">Claude Code / Cursor</text>
+                <text x="110" y="247" text-anchor="middle" class="diagram-subtext">Sanctum bearer token</text>
+
+                <rect x="20" y="270" width="180" height="46" rx="8" class="diagram-box"/>
+                <text x="110" y="292" text-anchor="middle" class="diagram-text">Local agent</text>
+                <text x="110" y="307" text-anchor="middle" class="diagram-subtext">stdio, same machine</text>
+
+                <rect x="280" y="20" width="160" height="46" rx="8" class="diagram-box"/>
+                <text x="360" y="48" text-anchor="middle" class="diagram-text">HTTP routes</text>
+
+                <rect x="280" y="190" width="160" height="46" rx="8" class="diagram-box"/>
+                <text x="360" y="212" text-anchor="middle" class="diagram-text">MCP server</text>
+                <text x="360" y="227" text-anchor="middle" class="diagram-subtext">tools / resources / prompts</text>
+
+                <rect x="520" y="105" width="180" height="130" rx="8" class="diagram-box-accent"/>
+                <text x="610" y="130" text-anchor="middle" class="diagram-text">Shared layer</text>
+                <text x="610" y="155" text-anchor="middle" class="diagram-subtext">Form Requests</text>
+                <text x="610" y="175" text-anchor="middle" class="diagram-subtext">Policies</text>
+                <text x="610" y="195" text-anchor="middle" class="diagram-subtext">Actions</text>
+                <text x="610" y="215" text-anchor="middle" class="diagram-subtext">Tenancy scopes</text>
+
+                <rect x="760" y="60" width="120" height="46" rx="8" class="diagram-box"/>
+                <text x="820" y="82" text-anchor="middle" class="diagram-text">Database</text>
+                <text x="820" y="97" text-anchor="middle" class="diagram-subtext">tenant-scoped</text>
+
+                <rect x="760" y="240" width="120" height="46" rx="8" class="diagram-box"/>
+                <text x="820" y="262" text-anchor="middle" class="diagram-text">Audit log</text>
+                <text x="820" y="277" text-anchor="middle" class="diagram-subtext">every MCP call</text>
+
+                <path d="M200 43 L280 43" class="diagram-line" marker-end="url(#arrow)"/>
+                <path d="M200 173 C240 173 240 213 280 213" class="diagram-line" marker-end="url(#arrow)"/>
+                <path d="M200 233 C240 233 240 213 280 213" class="diagram-line" marker-end="url(#arrow)"/>
+                <path d="M200 293 C240 293 240 213 280 213" class="diagram-line" marker-end="url(#arrow)"/>
+
+                <path d="M440 43 C490 43 480 130 520 155" class="diagram-line" marker-end="url(#arrow)"/>
+                <path d="M440 213 L520 190" class="diagram-line" marker-end="url(#arrow)"/>
+
+                <path d="M700 150 C730 150 730 83 760 83" class="diagram-line" marker-end="url(#arrow)"/>
+                <path d="M700 190 C730 190 730 263 760 263" class="diagram-line" marker-end="url(#arrow)"/>
+            </svg>
+        </div>
+    </div>
+</section>
+
+<!-- 4. Live tool catalogue -->
+<section id="tools">
+    <div class="container">
+        <p class="eyebrow">Live catalogue</p>
+        <h2 class="section-heading">Every tool, resource and prompt on the server</h2>
+        <p class="section-intro">
+            Rendered at build time from <code>docs/data/capability-map.json</code>, written by
+            <code>artisan docs:capability-map</code> straight from the running server, so this list cannot go stale.
+        </p>
+
+        <div class="filter-row" id="toolFilters" role="group" aria-label="Filter tools by domain"></div>
+
+        <div class="tool-list" id="toolList"></div>
+
+        <h3 style="margin-top: 3rem; font-size: 1.1rem; font-weight: 600; color: var(--color-heading);">Resources</h3>
+        <div class="tool-list" id="resourceList" style="margin-top: 1rem;"></div>
+
+        <h3 style="margin-top: 3rem; font-size: 1.1rem; font-weight: 600; color: var(--color-heading);">Prompts</h3>
+        <div class="tool-list" id="promptList" style="margin-top: 1rem;"></div>
+    </div>
+</section>
+
+<!-- 5. Parity matrix -->
+<section id="parity">
+    <div class="container">
+        <p class="eyebrow">Parity matrix</p>
+        <h2 class="section-heading">Every route, mapped or exempt</h2>
+        <p class="section-intro">
+            If a controller action ships without a matching tool (or a reasoned exemption), this table goes red
+            <strong>and CI fails</strong>. The same data backs <code>McpParityTest</code> and the in-app
+            <code>/settings/mcp</code> console.
+        </p>
+        <div class="parity-summary" id="paritySummary">Loading&hellip;</div>
+        <div class="card table-wrap">
+            <table id="parityTable">
+                <thead>
+                    <tr><th>Route</th><th>MCP tool / exemption</th><th>Covered</th></tr>
+                </thead>
+                <tbody id="parityTableBody"></tbody>
+            </table>
+        </div>
+        <p class="ci-note">CI runs this exact check on every push and fails the build if any row is not covered.</p>
+    </div>
+</section>
+
+<!-- 6. Security -->
+<section id="security">
+    <div class="container">
+        <p class="eyebrow">Security</p>
+        <h2 class="section-heading">The MCP layer is not a side door</h2>
+        <p class="section-intro">Every write goes through the same guardrails, whether it came from a click or a tool call.</p>
+        <div class="security-grid">
+            <div class="card security-card">
+                <h3>Tenancy</h3>
+                <p>A global Eloquent scope keyed to the authenticated user's organisation applies identically to controllers and tools, so there is no separate MCP query path to forget to scope.</p>
+            </div>
+            <div class="security-card card">
+                <h3>Per-tool authorization</h3>
+                <p>Every write tool calls the same Laravel policy the matching controller action calls, via one shared <code>authorizeTool()</code> signal that <code>laravel-auth-audit</code> can scan for.</p>
+            </div>
+            <div class="security-card card">
+                <h3>Prompt injection</h3>
+                <p>Tool descriptions use defensive wording and never interpolate user data into instructions; free-text fields returned to the model are wrapped in explicit delimiters.</p>
+            </div>
+            <div class="security-card card">
+                <h3>Confirmation gates</h3>
+                <p>Destructive tools (<code>invoices.delete</code>, <code>invoices.void</code>) return a structured "are you sure" response instead of acting, until the caller explicitly confirms.</p>
+            </div>
+            <div class="security-card card">
+                <h3>Idempotency</h3>
+                <p>Every write tool accepts an optional idempotency key; a retried call with the same key replays the original result instead of repeating the mutation.</p>
+            </div>
+            <div class="security-card card">
+                <h3>Audit trail</h3>
+                <p>Every tool call is logged with who, what, arguments, outcome and duration, and surfaced at <code>/audit/mcp</code>: the answer to "what did the AI actually do last night."</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 7. Auth coverage -->
+<section id="auth-coverage">
+    <div class="container">
+        <p class="eyebrow">Auth coverage</p>
+        <h2 class="section-heading">Closing the MCP blind spot</h2>
+        <p class="section-intro">
+            <code>laravel-auth-audit</code> scans routes, controllers and policies out of the box. MCP tools are
+            invokable classes it has never heard of, so this repo teaches it to scan <code>app/Mcp/Tools</code> too,
+            meaning a perfectly-covered HTTP surface can no longer hide an unguarded MCP one.
+        </p>
+        <div class="coverage-wrap">
+            <div class="card coverage-placeholder">
+                Auth-audit HTML report screenshot, added once the report is generated.
+            </div>
+            <div>
+                <p>The audit runs in CI on every push, covering both surfaces, with the full HTML report published as a build artifact.</p>
+                <div class="badge-row">
+                    <img src="https://img.shields.io/badge/tests-pending-lightgrey" alt="Test coverage badge, pending first CI run">
+                    <img src="https://img.shields.io/badge/auth--audit-pending-lightgrey" alt="Auth-audit coverage badge, pending first CI run">
+                </div>
+                <p style="margin-top: 1rem;"><a href="https://github.com/phoenix1331/laravel-mcp-invoicing-playground/actions">Latest CI run &rarr;</a></p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 8. Quickstart -->
+<section id="quickstart">
+    <div class="container">
+        <p class="eyebrow">Quickstart</p>
+        <h2 class="section-heading">Running in a few minutes</h2>
+        <div class="tabs">
+            <div class="tab-list" role="tablist" aria-label="Quickstart guides">
+                <button class="tab-btn" role="tab" id="tab-install" aria-controls="panel-install" aria-selected="true">Install</button>
+                <button class="tab-btn" role="tab" id="tab-desktop" aria-controls="panel-desktop" aria-selected="false">Connect Claude Desktop</button>
+                <button class="tab-btn" role="tab" id="tab-code" aria-controls="panel-code" aria-selected="false">Connect Claude Code</button>
+            </div>
+
+            <div class="tab-panel" id="panel-install" role="tabpanel" aria-labelledby="tab-install" data-active>
+                <button class="copy-btn" type="button" data-copy-target="code-install">Copy</button>
+                <pre id="code-install">git clone https://github.com/phoenix1331/laravel-mcp-invoicing-playground.git
+cd laravel-mcp-invoicing-playground
+make build
+make up
+make migrate
+make seed</pre>
+            </div>
+
+            <div class="tab-panel" id="panel-desktop" role="tabpanel" aria-labelledby="tab-desktop">
+                <button class="copy-btn" type="button" data-copy-target="code-desktop">Copy</button>
+                <pre id="code-desktop">1. Trust the local HTTPS certificate (make ssl-cert, see README)
+2. Claude Desktop -> Settings -> Connectors -> Add custom connector
+3. Server URL: https://localhost:8443/mcp/invoicing
+4. Approve the OAuth consent screen when prompted</pre>
+            </div>
+
+            <div class="tab-panel" id="panel-code" role="tabpanel" aria-labelledby="tab-code">
+                <button class="copy-btn" type="button" data-copy-target="code-code">Copy</button>
+                <pre id="code-code">{
+  "mcpServers": {
+    "invoicing": {
+      "command": "docker",
+      "args": ["compose", "exec", "-T", "app", "php", "artisan", "mcp:start", "invoicing"]
+    }
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 9. Screenshots -->
+<section id="screenshots">
+    <div class="container">
+        <p class="eyebrow">Screenshots</p>
+        <h2 class="section-heading">A few screens</h2>
+        <div class="screenshot-grid">
+            <figure class="browser-frame" style="margin: 0;">
+                <div class="bar"><span></span><span></span><span></span></div>
+                <div class="shot-placeholder">Dashboard screenshot, added once captured</div>
+            </figure>
+            <figure class="browser-frame" style="margin: 0;">
+                <div class="bar"><span></span><span></span><span></span></div>
+                <div class="shot-placeholder">Invoice editor screenshot, added once captured</div>
+            </figure>
+            <figure class="browser-frame" style="margin: 0;">
+                <div class="bar"><span></span><span></span><span></span></div>
+                <div class="shot-placeholder">MCP console screenshot, added once captured</div>
+            </figure>
+            <figure class="browser-frame" style="margin: 0;">
+                <div class="bar"><span></span><span></span><span></span></div>
+                <div class="shot-placeholder">Rendered invoice PDF screenshot, added once captured</div>
+            </figure>
+        </div>
+    </div>
+</section>
+
+</main>
+
+<footer class="site-footer">
+    <div class="container footer-row">
+        <p>&copy; <span id="year"></span> Darren Williams &middot; MIT Licence</p>
+        <ul class="footer-links">
+            <li><a href="https://github.com/phoenix1331/laravel-mcp-invoicing-playground">Repository</a></li>
+            <li><a href="https://github.com/phoenix1331/laravel-auth-audit">phoenix1331/laravel-auth-audit</a></li>
+        </ul>
+    </div>
+</footer>
+
+<script>
+(function () {
+    "use strict";
+
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Tabs
+    var tabButtons = Array.prototype.slice.call(document.querySelectorAll('[role="tab"]'));
+    tabButtons.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            tabButtons.forEach(function (b) {
+                b.setAttribute('aria-selected', 'false');
+                var panel = document.getElementById(b.getAttribute('aria-controls'));
+                if (panel) panel.removeAttribute('data-active');
+            });
+            btn.setAttribute('aria-selected', 'true');
+            var activePanel = document.getElementById(btn.getAttribute('aria-controls'));
+            if (activePanel) activePanel.setAttribute('data-active', '');
+        });
+    });
+
+    // Copy buttons
+    document.querySelectorAll('.copy-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var target = document.getElementById(btn.getAttribute('data-copy-target'));
+            if (!target) return;
+            var original = btn.textContent;
+            navigator.clipboard.writeText(target.textContent).then(function () {
+                btn.textContent = 'Copied!';
+                setTimeout(function () { btn.textContent = original; }, 1800);
+            }).catch(function () {
+                btn.textContent = 'Copy failed';
+                setTimeout(function () { btn.textContent = original; }, 1800);
+            });
+        });
+    });
+
+    // Live catalogue + parity matrix, from docs/data/capability-map.json
+    fetch('data/capability-map.json')
+        .then(function (res) { return res.json(); })
+        .then(renderCatalogue)
+        .catch(function () {
+            document.getElementById('toolList').innerHTML =
+                '<p style="color: var(--color-muted); font-size: 0.85rem;">Could not load the capability map. Run <code>artisan docs:capability-map</code> and rebuild the docs.</p>';
+        });
+
+    function escapeHtml(str) {
+        var div = document.createElement('div');
+        div.textContent = str == null ? '' : String(str);
+        return div.innerHTML;
+    }
+
+    function exampleArguments(schema) {
+        var example = {};
+        var props = (schema && schema.properties) || {};
+        Object.keys(props).forEach(function (key) {
+            var prop = props[key];
+            if (prop.default !== undefined) { example[key] = prop.default; return; }
+            if (prop.enum) { example[key] = prop.enum[0]; return; }
+            if (prop.type === 'integer' || prop.type === 'number') { example[key] = 1; return; }
+            if (prop.type === 'boolean') { example[key] = true; return; }
+            example[key] = prop.description ? '<' + key + '>' : '';
+        });
+        return example;
+    }
+
+    function renderCatalogue(data) {
+        renderTools(data.tools || []);
+        renderResources((data.resources || []).concat(data.resourceTemplates || []));
+        renderPrompts(data.prompts || []);
+        renderParity(data.parityMatrix || []);
+    }
+
+    function renderTools(tools) {
+        var domains = Array.from(new Set(tools.map(function (t) { return t.name.split('.')[0]; }))).sort();
+        var filterRow = document.getElementById('toolFilters');
+        var activeDomain = 'all';
+
+        function chip(label, value) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'filter-chip';
+            btn.textContent = label;
+            btn.setAttribute('aria-pressed', value === 'all' ? 'true' : 'false');
+            btn.addEventListener('click', function () {
+                activeDomain = value;
+                Array.prototype.forEach.call(filterRow.children, function (c) { c.setAttribute('aria-pressed', 'false'); });
+                btn.setAttribute('aria-pressed', 'true');
+                paint();
+            });
+            return btn;
+        }
+
+        filterRow.appendChild(chip('All (' + tools.length + ')', 'all'));
+        domains.forEach(function (domain) {
+            var count = tools.filter(function (t) { return t.name.split('.')[0] === domain; }).length;
+            filterRow.appendChild(chip(domain + ' (' + count + ')', domain));
+        });
+
+        var list = document.getElementById('toolList');
+
+        function paint() {
+            list.innerHTML = '';
+            tools
+                .filter(function (t) { return activeDomain === 'all' || t.name.split('.')[0] === activeDomain; })
+                .forEach(function (tool) {
+                    var isReadOnly = tool.annotations && tool.annotations.readOnlyHint;
+                    var badge = isReadOnly
+                        ? '<span class="badge badge-read">read</span>'
+                        : '<span class="badge badge-write">write</span>';
+
+                    var details = document.createElement('details');
+                    details.className = 'card tool-item';
+                    var exampleRequest = {
+                        jsonrpc: '2.0',
+                        id: 1,
+                        method: 'tools/call',
+                        params: { name: tool.name, arguments: exampleArguments(tool.inputSchema) },
+                    };
+
+                    details.innerHTML =
+                        '<summary>' +
+                            '<span class="tool-name-group">' +
+                                '<code class="tool-name">' + escapeHtml(tool.name) + '</code>' +
+                                '<span class="tool-desc">' + escapeHtml(tool.description) + '</span>' +
+                            '</span>' +
+                            badge +
+                        '</summary>' +
+                        '<div class="schema-body">' +
+                            '<h4>Input schema</h4>' +
+                            '<pre>' + escapeHtml(JSON.stringify(tool.inputSchema, null, 2)) + '</pre>' +
+                            (tool.outputSchema
+                                ? '<h4>Output schema</h4><pre>' + escapeHtml(JSON.stringify(tool.outputSchema, null, 2)) + '</pre>'
+                                : '') +
+                            '<h4>Example call</h4>' +
+                            '<pre>' + escapeHtml(JSON.stringify(exampleRequest, null, 2)) + '</pre>' +
+                        '</div>';
+
+                    list.appendChild(details);
+                });
+        }
+
+        paint();
+    }
+
+    function renderResources(resources) {
+        var list = document.getElementById('resourceList');
+        resources.forEach(function (resource) {
+            var div = document.createElement('div');
+            div.className = 'card tool-item';
+            div.style.padding = '1rem 1.25rem';
+            div.innerHTML =
+                '<code class="tool-name">' + escapeHtml(resource.uri || resource.uriTemplate) + '</code>' +
+                '<p class="tool-desc" style="margin-top: 0.35rem;">' + escapeHtml(resource.description) + '</p>';
+            list.appendChild(div);
+        });
+    }
+
+    function renderPrompts(prompts) {
+        var list = document.getElementById('promptList');
+        prompts.forEach(function (prompt) {
+            var div = document.createElement('div');
+            div.className = 'card tool-item';
+            div.style.padding = '1rem 1.25rem';
+            div.innerHTML =
+                '<code class="tool-name">' + escapeHtml(prompt.name) + '</code>' +
+                '<p class="tool-desc" style="margin-top: 0.35rem;">' + escapeHtml(prompt.description) + '</p>';
+            list.appendChild(div);
+        });
+    }
+
+    function renderParity(rows) {
+        var unsatisfied = rows.filter(function (r) { return !r.satisfied; });
+        var summary = document.getElementById('paritySummary');
+        summary.textContent = unsatisfied.length === 0
+            ? '✓ ' + rows.length + ' routes, all covered'
+            : '✗ ' + unsatisfied.length + ' of ' + rows.length + ' routes not covered';
+        if (unsatisfied.length > 0) {
+            summary.style.background = 'var(--color-danger-bg)';
+            summary.style.color = 'var(--color-danger)';
+        }
+
+        var body = document.getElementById('parityTableBody');
+        rows.forEach(function (row) {
+            var tr = document.createElement('tr');
+            var toolOrReason = row.tool
+                ? '<code>' + escapeHtml(row.tool) + '</code>'
+                : '<span style="color: var(--color-muted);">' + escapeHtml(row.reason) + '</span>';
+            var mark = row.satisfied
+                ? '<span class="check" aria-label="Covered">&check;</span>'
+                : '<span class="cross" aria-label="Not covered">&cross;</span>';
+            tr.innerHTML = '<td><code>' + escapeHtml(row.route) + '</code></td><td>' + toolOrReason + '</td><td>' + mark + '</td>';
+            body.appendChild(tr);
+        });
+    }
+})();
+</script>
+
+</body>
+</html>
