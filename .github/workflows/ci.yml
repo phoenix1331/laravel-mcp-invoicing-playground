@@ -194,14 +194,14 @@ jobs:
 
       - name: upload screenshots on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dusk-screenshots
           path: tests/Browser/screenshots
 
       - name: upload console logs on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dusk-console
           path: tests/Browser/console
@@ -322,7 +322,7 @@ jobs:
 
       - name: upload html report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: auth-audit-report
           path: storage/auth-audit/report.html
