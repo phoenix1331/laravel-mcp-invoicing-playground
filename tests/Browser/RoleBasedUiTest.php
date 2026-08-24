@@ -21,8 +21,10 @@ function loginAsDuskUser(Browser $browser, string $email): void
 
     // A generous reload timeout beyond even the raised global default (see
     // DuskTestCase::prepare()): CI's chromedriver degrades further on the
-    // second/third login within the same browse() session.
-    $browser->waitForReload(fn (Browser $browser) => $browser->press('Log in'), 25)
+    // second/third login within the same browse() session - confirmed via a
+    // CI screenshot showing the second login's form fully and correctly
+    // filled in, just waiting on a slow reload, not a typing problem.
+    $browser->waitForReload(fn (Browser $browser) => $browser->press('Log in'), 40)
         ->assertPathIs('/dashboard');
 }
 

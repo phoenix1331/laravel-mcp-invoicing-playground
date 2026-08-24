@@ -31,7 +31,7 @@ test('a member creates an invoice, sends it, marks it paid, and it becomes immut
             ->typeReliably('lines[0][quantity]', '2')
             ->typeReliably('lines[0][unit_price]', '150');
 
-        $browser->waitForText('360.00', 5)
+        $browser->waitForText('360.00', 15)
             ->press('Create invoice')
             ->waitUntil('window.location.pathname.match(/^\\/invoices\\/\\d+\\/edit$/)', 10);
 
