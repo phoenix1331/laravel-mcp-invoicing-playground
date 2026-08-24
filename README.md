@@ -1,6 +1,7 @@
 # laravel-mcp-invoicing-playground
 
-<!-- screenshot: docs/screenshots/mcp-console.png -->
+<img width="3164" height="1656" alt="Screenshot 2026-08-24 222349" src="https://github.com/user-attachments/assets/6980f433-a4a4-4e1c-908a-738d6c89bc25" />
+
 
 A Laravel 13 invoicing app where the browser and an AI client are two equal front doors onto the same domain layer - every screen a human can use is also an MCP tool an AI client can call, with the same policies, validation, and audit trail either way. An automated parity test proves it: if the HTTP surface and the MCP surface ever drift apart, CI fails.
 
