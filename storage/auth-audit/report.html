@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Audit Report</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
+        .header { background: #1e293b; border-bottom: 1px solid #334155; padding: 2rem; }
+        .header h1 { font-size: 1.25rem; font-weight: 600; color: #94a3b8; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 1rem; }
+        .coverage-block { display: flex; align-items: baseline; gap: 1rem; }
+        .coverage-number { font-size: 5rem; font-weight: 700; line-height: 1; }
+        .coverage-number.green { color: #22c55e; }
+        .coverage-number.amber { color: #f59e0b; }
+        .coverage-number.red { color: #ef4444; }
+        .coverage-meta { color: #64748b; font-size: 0.875rem; line-height: 1.8; }
+        .delta { font-size: 1rem; font-weight: 600; padding: 0.2rem 0.5rem; border-radius: 4px; }
+        .delta.positive { background: #14532d; color: #22c55e; }
+        .delta.negative { background: #450a0a; color: #ef4444; }
+        .delta.neutral { background: #1e293b; color: #64748b; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .section { margin-bottom: 2.5rem; }
+        .section-title { font-size: 0.75rem; font-weight: 600; color: #64748b; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid #1e293b; }
+        .controls { display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+        .search { background: #1e293b; border: 1px solid #334155; color: #e2e8f0; padding: 0.5rem 0.75rem; border-radius: 6px; font-size: 0.875rem; width: 280px; }
+        .search::placeholder { color: #475569; }
+        .search:focus { outline: none; border-color: #6366f1; }
+        .filter-btn { background: #1e293b; border: 1px solid #334155; color: #94a3b8; padding: 0.5rem 0.75rem; border-radius: 6px; font-size: 0.75rem; cursor: pointer; }
+        .filter-btn.active { background: #312e81; border-color: #6366f1; color: #a5b4fc; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+        th { text-align: left; padding: 0.625rem 0.75rem; color: #64748b; font-weight: 500; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #1e293b; cursor: pointer; user-select: none; white-space: nowrap; }
+        th:hover { color: #94a3b8; }
+        th .sort-icon { margin-left: 0.25rem; opacity: 0.4; }
+        th.sorted .sort-icon { opacity: 1; }
+        td { padding: 0.625rem 0.75rem; border-bottom: 1px solid #0f172a; vertical-align: middle; }
+        tr:hover td { background: #1e293b; }
+        tr.hidden { display: none; }
+        .badge { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 500; }
+        .badge.authorised { background: #14532d; color: #22c55e; }
+        .badge.unauthorised { background: #450a0a; color: #ef4444; }
+        .badge.skipped { background: #1e293b; color: #64748b; }
+        .badge.partial { background: #451a03; color: #f59e0b; }
+        .badge.baselined { background: #1e3a5f; color: #60a5fa; }
+        .stale-warning { background: #1c1917; border: 1px solid #78350f; color: #fbbf24; border-radius: 6px; padding: 0.75rem 1rem; font-size: 0.8125rem; margin-bottom: 1.5rem; }
+        .method { font-family: monospace; font-size: 0.75rem; background: #1e293b; padding: 0.15rem 0.4rem; border-radius: 3px; color: #94a3b8; }
+        .uri { font-family: monospace; color: #a5b4fc; }
+        .signal { font-family: monospace; font-size: 0.75rem; color: #64748b; }
+        .anti-pattern { font-family: monospace; font-size: 0.75rem; color: #f59e0b; }
+        .skip-reason { font-size: 0.75rem; color: #475569; font-style: italic; }
+        .empty { text-align: center; padding: 3rem; color: #475569; font-size: 0.875rem; }
+        .exclusion-table td:first-child { font-family: monospace; color: #a5b4fc; font-size: 0.8125rem; }
+        .expiry { font-size: 0.75rem; }
+        .expiry.expired { color: #ef4444; }
+        .expiry.future { color: #64748b; }
+        .footer { text-align: center; padding: 2rem; color: #334155; font-size: 0.75rem; border-top: 1px solid #1e293b; margin-top: 2rem; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div style="max-width:1200px;margin:0 auto;">
+            <h1>Auth Audit Report</h1>
+            <div class="coverage-block">
+                <div class="coverage-number green">100%</div>
+                <div class="coverage-meta">
+                    
+                    26 of 79 routes authorised<br>
+                    0 unauthorised &middot; 53 skipped &middot; 0 excluded<br>
+                    Generated 2026-08-24 16:40:44
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="section">
+            <div class="section-title">Routes</div>
+            <div class="controls">
+                <input type="text" class="search" id="routeSearch" placeholder="Filter by URI, controller, signal..." oninput="filterRoutes()">
+                <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+                <button class="filter-btn" onclick="setFilter('unauthorised', this)">Unauthorised</button>
+                <button class="filter-btn" onclick="setFilter('authorised', this)">Authorised</button>
+                <button class="filter-btn" onclick="setFilter('skipped', this)">Skipped</button>
+                <button class="filter-btn" onclick="setFilter('baselined', this)">Baselined</button>
+            </div>
+            
+            <table id="routeTable">
+                <thead>
+                    <tr>
+                        <th onclick="sortTable(0)">URI <span class="sort-icon">↕</span></th>
+                        <th onclick="sortTable(1)">Verb <span class="sort-icon">↕</span></th>
+                        <th onclick="sortTable(2)">Controller <span class="sort-icon">↕</span></th>
+                        <th onclick="sortTable(3)">Auth Signal <span class="sort-icon">↕</span></th>
+                        <th onclick="sortTable(4)">Status <span class="sort-icon">↕</span></th>
+                    </tr>
+                </thead>
+                <tbody id="routeBody">
+                    <tr data-status="skipped">
+        <td class="uri">/_dusk/login/{userId}/{guard?}</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">UserController@login</td>
+        <td><span class="skip-reason">Laravel Dusk browser-testing helper routes, registered only in the local/testing environment, never part of the deployed application</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/_dusk/logout/{guard?}</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">UserController@logout</td>
+        <td><span class="skip-reason">Laravel Dusk browser-testing helper routes, registered only in the local/testing environment, never part of the deployed application</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/_dusk/user/{guard?}</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">UserController@user</td>
+        <td><span class="skip-reason">Laravel Dusk browser-testing helper routes, registered only in the local/testing environment, never part of the deployed application</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/login</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">AuthenticatedSessionController@create</td>
+        <td><span class="skip-reason">Public authentication endpoint</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/login</td>
+        <td><span class="method">POST</span></td>
+        <td class="signal">AuthenticatedSessionController@store</td>
+        <td><span class="skip-reason">Public authentication endpoint</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/logout</td>
+        <td><span class="method">POST</span></td>
+        <td class="signal">AuthenticatedSessionController@destroy</td>
+        <td><span class="skip-reason">Ends the current session; no target user to authorise against</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/forgot-password</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">PasswordResetLinkController@create</td>
+        <td><span class="skip-reason">Public password reset flow</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/reset-password/{token}</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">NewPasswordController@create</td>
+        <td><span class="skip-reason">Public password reset flow</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/forgot-password</td>
+        <td><span class="method">POST</span></td>
+        <td class="signal">PasswordResetLinkController@store</td>
+        <td><span class="skip-reason">Public password reset flow</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/reset-password</td>
+        <td><span class="method">POST</span></td>
+        <td class="signal">NewPasswordController@store</td>
+        <td><span class="skip-reason">Public password reset flow</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/register</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">RegisteredUserController@create</td>
+        <td><span class="skip-reason">Public registration endpoint</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/register</td>
+        <td><span class="method">POST</span></td>
+        <td class="signal">RegisteredUserController@store</td>
+        <td><span class="skip-reason">Public registration endpoint</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/user/profile-information</td>
+        <td><span class="method">PUT</span></td>
+        <td class="signal">ProfileInformationController@update</td>
+        <td><span class="skip-reason">Self-service account management (profile, password, 2FA); every action operates on auth()-&gt;user() only, so authentication is the only applicable check</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/user/password</td>
+        <td><span class="method">PUT</span></td>
+        <td class="signal">PasswordController@update</td>
+        <td><span class="skip-reason">Self-service account management (profile, password, 2FA); every action operates on auth()-&gt;user() only, so authentication is the only applicable check</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/user/confirm-password</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">ConfirmablePasswordController@show</td>
+        <td><span class="skip-reason">Self-service account management (profile, password, 2FA); every action operates on auth()-&gt;user() only, so authentication is the only applicable check</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/user/confirmed-password-status</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">ConfirmedPasswordStatusController@show</td>
+        <td><span class="skip-reason">Self-service account management (profile, password, 2FA); every action operates on auth()-&gt;user() only, so authentication is the only applicable check</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/user/confirm-password</td>
+        <td><span class="method">POST</span></td>
+        <td class="signal">ConfirmablePasswordController@store</td>
+        <td><span class="skip-reason">Self-service account management (profile, password, 2FA); every action operates on auth()-&gt;user() only, so authentication is the only applicable check</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/two-factor-challenge</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">TwoFactorAuthenticatedSessionController@create</td>
+        <td><span class="skip-reason">Public two-factor login challenge, guarded by a pending-login session key</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/two-factor-challenge</td>
+        <td><span class="method">POST</span></td>
+        <td class="signal">TwoFactorAuthenticatedSessionController@store</td>
+        <td><span class="skip-reason">Public two-factor login challenge, guarded by a pending-login session key</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/user/two-factor-authentication</td>
+        <td><span class="method">POST</span></td>
+        <td class="signal">TwoFactorAuthenticationController@store</td>
+        <td><span class="skip-reason">Self-service account management (profile, password, 2FA); every action operates on auth()-&gt;user() only, so authentication is the only applicable check</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/user/confirmed-two-factor-authentication</td>
+        <td><span class="method">POST</span></td>
+        <td class="signal">ConfirmedTwoFactorAuthenticationController@store</td>
+        <td><span class="skip-reason">Self-service account management (profile, password, 2FA); every action operates on auth()-&gt;user() only, so authentication is the only applicable check</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/user/two-factor-authentication</td>
+        <td><span class="method">DELETE</span></td>
+        <td class="signal">TwoFactorAuthenticationController@destroy</td>
+        <td><span class="skip-reason">Self-service account management (profile, password, 2FA); every action operates on auth()-&gt;user() only, so authentication is the only applicable check</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/user/two-factor-qr-code</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">TwoFactorQrCodeController@show</td>
+        <td><span class="skip-reason">Self-service account management (profile, password, 2FA); every action operates on auth()-&gt;user() only, so authentication is the only applicable check</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/user/two-factor-secret-key</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">TwoFactorSecretKeyController@show</td>
+        <td><span class="skip-reason">Self-service account management (profile, password, 2FA); every action operates on auth()-&gt;user() only, so authentication is the only applicable check</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/user/two-factor-recovery-codes</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">RecoveryCodeController@index</td>
+        <td><span class="skip-reason">Self-service account management (profile, password, 2FA); every action operates on auth()-&gt;user() only, so authentication is the only applicable check</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/user/two-factor-recovery-codes</td>
+        <td><span class="method">POST</span></td>
+        <td class="signal">RecoveryCodeController@store</td>
+        <td><span class="skip-reason">Self-service account management (profile, password, 2FA); every action operates on auth()-&gt;user() only, so authentication is the only applicable check</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/mcp/invoicing</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">-</td>
+        <td><span class="skip-reason">JSON-RPC entrypoint for laravel/mcp; every tools/call goes through AuthorizesToolAccess per tool (see the custom_signals entry above) rather than a single route-level check, since different tools require different abilities</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/mcp/invoicing</td>
+        <td><span class="method">DELETE</span></td>
+        <td class="signal">-</td>
+        <td><span class="skip-reason">JSON-RPC entrypoint for laravel/mcp; every tools/call goes through AuthorizesToolAccess per tool (see the custom_signals entry above) rather than a single route-level check, since different tools require different abilities</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/mcp/invoicing</td>
+        <td><span class="method">POST</span></td>
+        <td class="signal">-</td>
+        <td><span class="skip-reason">JSON-RPC entrypoint for laravel/mcp; every tools/call goes through AuthorizesToolAccess per tool (see the custom_signals entry above) rather than a single route-level check, since different tools require different abilities</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/.well-known/oauth-protected-resource</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">-</td>
+        <td><span class="skip-reason">OAuth 2.1 discovery metadata per RFC 8414, intentionally public so any client can locate the authorization server before authenticating</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/.well-known/oauth-authorization-server</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">-</td>
+        <td><span class="skip-reason">OAuth 2.1 discovery metadata per RFC 8414, intentionally public so any client can locate the authorization server before authenticating</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/.well-known/oauth-protected-resource/{path}</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">-</td>
+        <td><span class="skip-reason">OAuth 2.1 discovery metadata per RFC 8414, intentionally public so any client can locate the authorization server before authenticating</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/.well-known/oauth-authorization-server/{path}</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">-</td>
+        <td><span class="skip-reason">OAuth 2.1 discovery metadata per RFC 8414, intentionally public so any client can locate the authorization server before authenticating</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/oauth/register</td>
+        <td><span class="method">POST</span></td>
+        <td class="signal">OAuthRegisterController@</td>
+        <td><span class="skip-reason">Passport and laravel/mcp OAuth 2.1 routes (authorize, token, device flow, dynamic client registration) - the OAuth flow itself is the authorisation mechanism these routes implement, not something a policy check sits in front of</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/oauth/token</td>
+        <td><span class="method">POST</span></td>
+        <td class="signal">AccessTokenController@issueToken</td>
+        <td><span class="skip-reason">Passport and laravel/mcp OAuth 2.1 routes (authorize, token, device flow, dynamic client registration) - the OAuth flow itself is the authorisation mechanism these routes implement, not something a policy check sits in front of</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/oauth/authorize</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">AuthorizationController@authorize</td>
+        <td><span class="skip-reason">Passport and laravel/mcp OAuth 2.1 routes (authorize, token, device flow, dynamic client registration) - the OAuth flow itself is the authorisation mechanism these routes implement, not something a policy check sits in front of</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/oauth/device</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">DeviceUserCodeController@</td>
+        <td><span class="skip-reason">Passport and laravel/mcp OAuth 2.1 routes (authorize, token, device flow, dynamic client registration) - the OAuth flow itself is the authorisation mechanism these routes implement, not something a policy check sits in front of</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/oauth/device/code</td>
+        <td><span class="method">POST</span></td>
+        <td class="signal">DeviceCodeController@</td>
+        <td><span class="skip-reason">Passport and laravel/mcp OAuth 2.1 routes (authorize, token, device flow, dynamic client registration) - the OAuth flow itself is the authorisation mechanism these routes implement, not something a policy check sits in front of</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/oauth/token/refresh</td>
+        <td><span class="method">POST</span></td>
+        <td class="signal">TransientTokenController@refresh</td>
+        <td><span class="skip-reason">Passport and laravel/mcp OAuth 2.1 routes (authorize, token, device flow, dynamic client registration) - the OAuth flow itself is the authorisation mechanism these routes implement, not something a policy check sits in front of</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/oauth/authorize</td>
+        <td><span class="method">POST</span></td>
+        <td class="signal">ApproveAuthorizationController@approve</td>
+        <td><span class="skip-reason">Passport and laravel/mcp OAuth 2.1 routes (authorize, token, device flow, dynamic client registration) - the OAuth flow itself is the authorisation mechanism these routes implement, not something a policy check sits in front of</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/oauth/authorize</td>
+        <td><span class="method">DELETE</span></td>
+        <td class="signal">DenyAuthorizationController@deny</td>
+        <td><span class="skip-reason">Passport and laravel/mcp OAuth 2.1 routes (authorize, token, device flow, dynamic client registration) - the OAuth flow itself is the authorisation mechanism these routes implement, not something a policy check sits in front of</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/oauth/device/authorize</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">DeviceAuthorizationController@</td>
+        <td><span class="skip-reason">Passport and laravel/mcp OAuth 2.1 routes (authorize, token, device flow, dynamic client registration) - the OAuth flow itself is the authorisation mechanism these routes implement, not something a policy check sits in front of</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/oauth/device/authorize</td>
+        <td><span class="method">POST</span></td>
+        <td class="signal">ApproveDeviceAuthorizationController@</td>
+        <td><span class="skip-reason">Passport and laravel/mcp OAuth 2.1 routes (authorize, token, device flow, dynamic client registration) - the OAuth flow itself is the authorisation mechanism these routes implement, not something a policy check sits in front of</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/oauth/device/authorize</td>
+        <td><span class="method">DELETE</span></td>
+        <td class="signal">DenyDeviceAuthorizationController@</td>
+        <td><span class="skip-reason">Passport and laravel/mcp OAuth 2.1 routes (authorize, token, device flow, dynamic client registration) - the OAuth flow itself is the authorisation mechanism these routes implement, not something a policy check sits in front of</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/sanctum/csrf-cookie</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">CsrfCookieController@show</td>
+        <td><span class="skip-reason">Sanctum CSRF cookie endpoint</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/up</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">-</td>
+        <td><span class="skip-reason">Health check endpoint, no sensitive data</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">//</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">-</td>
+        <td><span class="skip-reason">Public marketing/welcome page</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/invoices/{invoice}/pdf/signed</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">InvoicePdfDownloadController@</td>
+        <td><span class="skip-reason">Protected by the signed middleware (a one-time, expiring signature issued by the invoices.download_pdf MCP tool), not session authentication - the signature itself is the authorisation</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/dashboard</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">DashboardController@</td>
+        <td><span class="skip-reason">Authenticated landing page with no model-level authorisation yet; scoped queries only</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="authorised">
+        <td class="uri">/customers</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">CustomerController@index</td>
+        <td><span class="signal">$this-&gt;authorize()</span></td>
+        <td><span class="badge authorised">authorised</span></td>
+    </tr><tr data-status="authorised">
+        <td class="uri">/customers/create</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">CustomerController@create</td>
+        <td><span class="signal">$this-&gt;authorize()</span></td>
+        <td><span class="badge authorised">authorised</span></td>
+    </tr><tr data-status="authorised">
+        <td class="uri">/customers</td>
+        <td><span class="method">POST</span></td>
+        <td class="signal">CustomerController@store</td>
+        <td><span class="signal">App\Http\Requests\StoreCustomerRequest::authorize()</span></td>
+        <td><span class="badge authorised">authorised</span></td>
+    </tr><tr data-status="authorised">
+        <td class="uri">/customers/{customer}</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">CustomerController@show</td>
+        <td><span class="signal">$this-&gt;authorize()</span></td>
+        <td><span class="badge authorised">authorised</span></td>
+    </tr><tr data-status="authorised">
+        <td class="uri">/customers/{customer}/edit</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">CustomerController@edit</td>
+        <td><span class="signal">$this-&gt;authorize()</span></td>
+        <td><span class="badge authorised">authorised</span></td>
+    </tr><tr data-status="authorised">
+        <td class="uri">/customers/{customer}</td>
+        <td><span class="method">PUT|PATCH</span></td>
+        <td class="signal">CustomerController@update</td>
+        <td><span class="signal">App\Http\Requests\UpdateCustomerRequest::authorize() [instance-scoped]</span></td>
+        <td><span class="badge authorised">authorised</span></td>
+    </tr><tr data-status="authorised">
+        <td class="uri">/customers/{customer}</td>
+        <td><span class="method">DELETE</span></td>
+        <td class="signal">CustomerController@destroy</td>
+        <td><span class="signal">$this-&gt;authorize()</span></td>
+        <td><span class="badge authorised">authorised</span></td>
+    </tr><tr data-status="authorised">
+        <td class="uri">/invoices</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">InvoiceController@index</td>
+        <td><span class="signal">$this-&gt;authorize()</span></td>
+        <td><span class="badge authorised">authorised</span></td>
+    </tr><tr data-status="authorised">
+        <td class="uri">/invoices/create</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">InvoiceController@create</td>
+        <td><span class="signal">$this-&gt;authorize()</span></td>
+        <td><span class="badge authorised">authorised</span></td>
+    </tr><tr data-status="authorised">
+        <td class="uri">/invoices</td>
+        <td><span class="method">POST</span></td>
+        <td class="signal">InvoiceController@store</td>
+        <td><span class="signal">App\Http\Requests\StoreInvoiceRequest::authorize()</span></td>
+        <td><span class="badge authorised">authorised</span></td>
+    </tr><tr data-status="authorised">
+        <td class="uri">/invoices/{invoice}</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">InvoiceController@show</td>
+        <td><span class="signal">$this-&gt;authorize()</span></td>
+        <td><span class="badge authorised">authorised</span></td>
+    </tr><tr data-status="authorised">
+        <td class="uri">/invoices/{invoice}/edit</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">InvoiceController@edit</td>
+        <td><span class="signal">$this-&gt;authorize()</span></td>
+        <td><span class="badge authorised">authorised</span></td>
+    </tr><tr data-status="authorised">
+        <td class="uri">/invoices/{invoice}</td>
+        <td><span class="method">PUT|PATCH</span></td>
+        <td class="signal">InvoiceController@update</td>
+        <td><span class="signal">App\Http\Requests\UpdateInvoiceRequest::authorize() [instance-scoped]</span></td>
+        <td><span class="badge authorised">authorised</span></td>
+    </tr><tr data-status="authorised">
+        <td class="uri">/invoices/{invoice}</td>
+        <td><span class="method">DELETE</span></td>
+        <td class="signal">InvoiceController@destroy</td>
+        <td><span class="signal">$this-&gt;authorize()</span></td>
+        <td><span class="badge authorised">authorised</span></td>
+    </tr><tr data-status="authorised">
+        <td class="uri">/invoices/{invoice}/send</td>
+        <td><span class="method">POST</span></td>
+        <td class="signal">InvoiceController@send</td>
+        <td><span class="signal">$this-&gt;authorize()</span></td>
+        <td><span class="badge authorised">authorised</span></td>
+    </tr><tr data-status="authorised">
+        <td class="uri">/invoices/{invoice}/mark-paid</td>
+        <td><span class="method">POST</span></td>
+        <td class="signal">InvoiceController@markPaid</td>
+        <td><span class="signal">$this-&gt;authorize()</span></td>
+        <td><span class="badge authorised">authorised</span></td>
+    </tr><tr data-status="authorised">
+        <td class="uri">/invoices/{invoice}/void</td>
+        <td><span class="method">POST</span></td>
+        <td class="signal">InvoiceController@void</td>
+        <td><span class="signal">$this-&gt;authorize()</span></td>
+        <td><span class="badge authorised">authorised</span></td>
+    </tr><tr data-status="authorised">
+        <td class="uri">/invoices/{invoice}/pdf</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">InvoiceController@downloadPdf</td>
+        <td><span class="signal">$this-&gt;authorize()</span></td>
+        <td><span class="badge authorised">authorised</span></td>
+    </tr><tr data-status="authorised">
+        <td class="uri">/settings/organisation</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">OrganisationSettingsController@edit</td>
+        <td><span class="signal">$this-&gt;authorize()</span></td>
+        <td><span class="badge authorised">authorised</span></td>
+    </tr><tr data-status="authorised">
+        <td class="uri">/settings/organisation</td>
+        <td><span class="method">PUT</span></td>
+        <td class="signal">OrganisationSettingsController@update</td>
+        <td><span class="signal">App\Http\Requests\UpdateOrganisationRequest::authorize()</span></td>
+        <td><span class="badge authorised">authorised</span></td>
+    </tr><tr data-status="authorised">
+        <td class="uri">/settings/tokens</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">ApiTokenController@index</td>
+        <td><span class="signal">custom: App\Http\Controllers\ApiTokenController::destroy</span></td>
+        <td><span class="badge authorised">authorised</span></td>
+    </tr><tr data-status="authorised">
+        <td class="uri">/settings/tokens</td>
+        <td><span class="method">POST</span></td>
+        <td class="signal">ApiTokenController@store</td>
+        <td><span class="signal">App\Http\Requests\StoreApiTokenRequest::authorize()</span></td>
+        <td><span class="badge authorised">authorised</span></td>
+    </tr><tr data-status="authorised">
+        <td class="uri">/settings/tokens/{token}</td>
+        <td><span class="method">DELETE</span></td>
+        <td class="signal">ApiTokenController@destroy</td>
+        <td><span class="signal">custom: App\Http\Controllers\ApiTokenController::destroy</span></td>
+        <td><span class="badge authorised">authorised</span></td>
+    </tr><tr data-status="authorised">
+        <td class="uri">/settings/team</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">TeamController@index</td>
+        <td><span class="signal">abort_unless($user-&gt;can(...))</span></td>
+        <td><span class="badge authorised">authorised</span></td>
+    </tr><tr data-status="authorised">
+        <td class="uri">/settings/team</td>
+        <td><span class="method">POST</span></td>
+        <td class="signal">TeamController@store</td>
+        <td><span class="signal">App\Http\Requests\InviteTeamMemberRequest::authorize()</span></td>
+        <td><span class="badge authorised">authorised</span></td>
+    </tr><tr data-status="authorised">
+        <td class="uri">/settings/team/{user}</td>
+        <td><span class="method">PUT</span></td>
+        <td class="signal">TeamController@update</td>
+        <td><span class="signal">App\Http\Requests\SetTeamMemberRoleRequest::authorize() [instance-scoped]</span></td>
+        <td><span class="badge authorised">authorised</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/settings/mcp</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">McpConsoleController@</td>
+        <td><span class="skip-reason">Renders the server-wide tool catalogue from the running InvoicingServer instance, identical for every authenticated user; no tenant data, no model-level authorisation applicable</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/audit/mcp</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">McpAuditLogController@</td>
+        <td><span class="skip-reason">Reads McpAuditLog, which carries the BelongsToOrganisation global scope, so every query is already tenant-scoped without an explicit authorize() call</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/storage/{path}</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="signal">-</td>
+        <td><span class="skip-reason">Laravel storage symlink passthrough, not an application route</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr><tr data-status="skipped">
+        <td class="uri">/storage/{path}</td>
+        <td><span class="method">PUT</span></td>
+        <td class="signal">-</td>
+        <td><span class="skip-reason">Laravel storage symlink passthrough, not an application route</span></td>
+        <td><span class="badge skipped">skipped</span></td>
+    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Exclusions &amp; Bypasses</div>
+            <table class="exclusion-table">
+                <thead>
+                    <tr>
+                        <th>URI</th>
+                        <th>Verb</th>
+                        <th>Reason</th>
+                        <th>Expiry</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+        <td>/_dusk/login/{userId}/{guard?}</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="skip-reason">Laravel Dusk browser-testing helper routes, registered only in the local/testing environment, never part of the deployed application</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/_dusk/logout/{guard?}</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="skip-reason">Laravel Dusk browser-testing helper routes, registered only in the local/testing environment, never part of the deployed application</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/_dusk/user/{guard?}</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="skip-reason">Laravel Dusk browser-testing helper routes, registered only in the local/testing environment, never part of the deployed application</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/login</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="skip-reason">Public authentication endpoint</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/login</td>
+        <td><span class="method">POST</span></td>
+        <td class="skip-reason">Public authentication endpoint</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/logout</td>
+        <td><span class="method">POST</span></td>
+        <td class="skip-reason">Ends the current session; no target user to authorise against</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/forgot-password</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="skip-reason">Public password reset flow</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/reset-password/{token}</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="skip-reason">Public password reset flow</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/forgot-password</td>
+        <td><span class="method">POST</span></td>
+        <td class="skip-reason">Public password reset flow</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/reset-password</td>
+        <td><span class="method">POST</span></td>
+        <td class="skip-reason">Public password reset flow</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/register</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="skip-reason">Public registration endpoint</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/register</td>
+        <td><span class="method">POST</span></td>
+        <td class="skip-reason">Public registration endpoint</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/user/profile-information</td>
+        <td><span class="method">PUT</span></td>
+        <td class="skip-reason">Self-service account management (profile, password, 2FA); every action operates on auth()-&gt;user() only, so authentication is the only applicable check</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/user/password</td>
+        <td><span class="method">PUT</span></td>
+        <td class="skip-reason">Self-service account management (profile, password, 2FA); every action operates on auth()-&gt;user() only, so authentication is the only applicable check</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/user/confirm-password</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="skip-reason">Self-service account management (profile, password, 2FA); every action operates on auth()-&gt;user() only, so authentication is the only applicable check</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/user/confirmed-password-status</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="skip-reason">Self-service account management (profile, password, 2FA); every action operates on auth()-&gt;user() only, so authentication is the only applicable check</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/user/confirm-password</td>
+        <td><span class="method">POST</span></td>
+        <td class="skip-reason">Self-service account management (profile, password, 2FA); every action operates on auth()-&gt;user() only, so authentication is the only applicable check</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/two-factor-challenge</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="skip-reason">Public two-factor login challenge, guarded by a pending-login session key</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/two-factor-challenge</td>
+        <td><span class="method">POST</span></td>
+        <td class="skip-reason">Public two-factor login challenge, guarded by a pending-login session key</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/user/two-factor-authentication</td>
+        <td><span class="method">POST</span></td>
+        <td class="skip-reason">Self-service account management (profile, password, 2FA); every action operates on auth()-&gt;user() only, so authentication is the only applicable check</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/user/confirmed-two-factor-authentication</td>
+        <td><span class="method">POST</span></td>
+        <td class="skip-reason">Self-service account management (profile, password, 2FA); every action operates on auth()-&gt;user() only, so authentication is the only applicable check</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/user/two-factor-authentication</td>
+        <td><span class="method">DELETE</span></td>
+        <td class="skip-reason">Self-service account management (profile, password, 2FA); every action operates on auth()-&gt;user() only, so authentication is the only applicable check</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/user/two-factor-qr-code</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="skip-reason">Self-service account management (profile, password, 2FA); every action operates on auth()-&gt;user() only, so authentication is the only applicable check</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/user/two-factor-secret-key</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="skip-reason">Self-service account management (profile, password, 2FA); every action operates on auth()-&gt;user() only, so authentication is the only applicable check</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/user/two-factor-recovery-codes</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="skip-reason">Self-service account management (profile, password, 2FA); every action operates on auth()-&gt;user() only, so authentication is the only applicable check</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/user/two-factor-recovery-codes</td>
+        <td><span class="method">POST</span></td>
+        <td class="skip-reason">Self-service account management (profile, password, 2FA); every action operates on auth()-&gt;user() only, so authentication is the only applicable check</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/mcp/invoicing</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="skip-reason">JSON-RPC entrypoint for laravel/mcp; every tools/call goes through AuthorizesToolAccess per tool (see the custom_signals entry above) rather than a single route-level check, since different tools require different abilities</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/mcp/invoicing</td>
+        <td><span class="method">DELETE</span></td>
+        <td class="skip-reason">JSON-RPC entrypoint for laravel/mcp; every tools/call goes through AuthorizesToolAccess per tool (see the custom_signals entry above) rather than a single route-level check, since different tools require different abilities</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/mcp/invoicing</td>
+        <td><span class="method">POST</span></td>
+        <td class="skip-reason">JSON-RPC entrypoint for laravel/mcp; every tools/call goes through AuthorizesToolAccess per tool (see the custom_signals entry above) rather than a single route-level check, since different tools require different abilities</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/.well-known/oauth-protected-resource</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="skip-reason">OAuth 2.1 discovery metadata per RFC 8414, intentionally public so any client can locate the authorization server before authenticating</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/.well-known/oauth-authorization-server</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="skip-reason">OAuth 2.1 discovery metadata per RFC 8414, intentionally public so any client can locate the authorization server before authenticating</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/.well-known/oauth-protected-resource/{path}</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="skip-reason">OAuth 2.1 discovery metadata per RFC 8414, intentionally public so any client can locate the authorization server before authenticating</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/.well-known/oauth-authorization-server/{path}</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="skip-reason">OAuth 2.1 discovery metadata per RFC 8414, intentionally public so any client can locate the authorization server before authenticating</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/oauth/register</td>
+        <td><span class="method">POST</span></td>
+        <td class="skip-reason">Passport and laravel/mcp OAuth 2.1 routes (authorize, token, device flow, dynamic client registration) - the OAuth flow itself is the authorisation mechanism these routes implement, not something a policy check sits in front of</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/oauth/token</td>
+        <td><span class="method">POST</span></td>
+        <td class="skip-reason">Passport and laravel/mcp OAuth 2.1 routes (authorize, token, device flow, dynamic client registration) - the OAuth flow itself is the authorisation mechanism these routes implement, not something a policy check sits in front of</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/oauth/authorize</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="skip-reason">Passport and laravel/mcp OAuth 2.1 routes (authorize, token, device flow, dynamic client registration) - the OAuth flow itself is the authorisation mechanism these routes implement, not something a policy check sits in front of</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/oauth/device</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="skip-reason">Passport and laravel/mcp OAuth 2.1 routes (authorize, token, device flow, dynamic client registration) - the OAuth flow itself is the authorisation mechanism these routes implement, not something a policy check sits in front of</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/oauth/device/code</td>
+        <td><span class="method">POST</span></td>
+        <td class="skip-reason">Passport and laravel/mcp OAuth 2.1 routes (authorize, token, device flow, dynamic client registration) - the OAuth flow itself is the authorisation mechanism these routes implement, not something a policy check sits in front of</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/oauth/token/refresh</td>
+        <td><span class="method">POST</span></td>
+        <td class="skip-reason">Passport and laravel/mcp OAuth 2.1 routes (authorize, token, device flow, dynamic client registration) - the OAuth flow itself is the authorisation mechanism these routes implement, not something a policy check sits in front of</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/oauth/authorize</td>
+        <td><span class="method">POST</span></td>
+        <td class="skip-reason">Passport and laravel/mcp OAuth 2.1 routes (authorize, token, device flow, dynamic client registration) - the OAuth flow itself is the authorisation mechanism these routes implement, not something a policy check sits in front of</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/oauth/authorize</td>
+        <td><span class="method">DELETE</span></td>
+        <td class="skip-reason">Passport and laravel/mcp OAuth 2.1 routes (authorize, token, device flow, dynamic client registration) - the OAuth flow itself is the authorisation mechanism these routes implement, not something a policy check sits in front of</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/oauth/device/authorize</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="skip-reason">Passport and laravel/mcp OAuth 2.1 routes (authorize, token, device flow, dynamic client registration) - the OAuth flow itself is the authorisation mechanism these routes implement, not something a policy check sits in front of</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/oauth/device/authorize</td>
+        <td><span class="method">POST</span></td>
+        <td class="skip-reason">Passport and laravel/mcp OAuth 2.1 routes (authorize, token, device flow, dynamic client registration) - the OAuth flow itself is the authorisation mechanism these routes implement, not something a policy check sits in front of</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/oauth/device/authorize</td>
+        <td><span class="method">DELETE</span></td>
+        <td class="skip-reason">Passport and laravel/mcp OAuth 2.1 routes (authorize, token, device flow, dynamic client registration) - the OAuth flow itself is the authorisation mechanism these routes implement, not something a policy check sits in front of</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/sanctum/csrf-cookie</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="skip-reason">Sanctum CSRF cookie endpoint</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/up</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="skip-reason">Health check endpoint, no sensitive data</td>
+        <td>-</td>
+    </tr><tr>
+        <td>//</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="skip-reason">Public marketing/welcome page</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/invoices/{invoice}/pdf/signed</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="skip-reason">Protected by the signed middleware (a one-time, expiring signature issued by the invoices.download_pdf MCP tool), not session authentication - the signature itself is the authorisation</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/dashboard</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="skip-reason">Authenticated landing page with no model-level authorisation yet; scoped queries only</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/settings/mcp</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="skip-reason">Renders the server-wide tool catalogue from the running InvoicingServer instance, identical for every authenticated user; no tenant data, no model-level authorisation applicable</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/audit/mcp</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="skip-reason">Reads McpAuditLog, which carries the BelongsToOrganisation global scope, so every query is already tenant-scoped without an explicit authorize() call</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/storage/{path}</td>
+        <td><span class="method">GET|HEAD</span></td>
+        <td class="skip-reason">Laravel storage symlink passthrough, not an application route</td>
+        <td>-</td>
+    </tr><tr>
+        <td>/storage/{path}</td>
+        <td><span class="method">PUT</span></td>
+        <td class="skip-reason">Laravel storage symlink passthrough, not an application route</td>
+        <td>-</td>
+    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="footer">
+        phoenix1331/laravel-auth-audit &middot; generated 2026-08-24 16:40:44
+    </div>
+
+    <script>
+        let activeFilter = 'all';
+        let sortCol = -1;
+        let sortAsc = true;
+
+        function filterRoutes() {
+            const q = document.getElementById('routeSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('#routeBody tr');
+            rows.forEach(row => {
+                const status = row.dataset.status;
+                const text = row.textContent.toLowerCase();
+                const matchesFilter = activeFilter === 'all' || status === activeFilter;
+                const matchesSearch = q === '' || text.includes(q);
+                row.classList.toggle('hidden', !(matchesFilter && matchesSearch));
+            });
+        }
+
+        function setFilter(filter, btn) {
+            activeFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            filterRoutes();
+        }
+
+        function sortTable(col) {
+            const tbody = document.getElementById('routeBody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            if (sortCol === col) { sortAsc = !sortAsc; } else { sortCol = col; sortAsc = true; }
+            rows.sort((a, b) => {
+                const aText = a.cells[col]?.textContent.trim() ?? '';
+                const bText = b.cells[col]?.textContent.trim() ?? '';
+                return sortAsc ? aText.localeCompare(bText) : bText.localeCompare(aText);
+            });
+            rows.forEach(r => tbody.appendChild(r));
+            document.querySelectorAll('th').forEach((th, i) => th.classList.toggle('sorted', i === col));
+        }
+    </script>
+</body>
+</html>

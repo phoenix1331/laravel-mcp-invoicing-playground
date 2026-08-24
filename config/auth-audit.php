@@ -35,6 +35,13 @@ return [
         ['pattern' => '/', 'reason' => 'Public marketing/welcome page'],
         ['pattern' => 'dashboard', 'reason' => 'Authenticated landing page with no model-level authorisation yet; scoped queries only'],
         ['pattern' => 'storage/*', 'reason' => 'Laravel storage symlink passthrough, not an application route'],
+        ['pattern' => 'settings/mcp', 'reason' => 'Renders the server-wide tool catalogue from the running InvoicingServer instance, identical for every authenticated user; no tenant data, no model-level authorisation applicable'],
+        ['pattern' => 'audit/mcp', 'reason' => 'Reads McpAuditLog, which carries the BelongsToOrganisation global scope, so every query is already tenant-scoped without an explicit authorize() call'],
+        ['pattern' => 'mcp/invoicing', 'reason' => 'JSON-RPC entrypoint for laravel/mcp; every tools/call goes through AuthorizesToolAccess per tool (see the custom_signals entry above) rather than a single route-level check, since different tools require different abilities'],
+        ['pattern' => 'invoices/*/pdf/signed', 'reason' => 'Protected by the signed middleware (a one-time, expiring signature issued by the invoices.download_pdf MCP tool), not session authentication - the signature itself is the authorisation'],
+        ['pattern' => '.well-known/*', 'reason' => 'OAuth 2.1 discovery metadata per RFC 8414, intentionally public so any client can locate the authorization server before authenticating'],
+        ['pattern' => 'oauth/*', 'reason' => 'Passport and laravel/mcp OAuth 2.1 routes (authorize, token, device flow, dynamic client registration) - the OAuth flow itself is the authorisation mechanism these routes implement, not something a policy check sits in front of'],
+        ['pattern' => '_dusk/*', 'reason' => 'Laravel Dusk browser-testing helper routes, registered only in the local/testing environment, never part of the deployed application'],
     ],
 
     /*
@@ -47,11 +54,14 @@ return [
     ],
 
     /*
-     * Directories scanned to resolve controller class files.
-     * Extend this list to cover Livewire components or other action classes.
+     * Directories scanned to resolve controller class files. MCP tools are
+     * invokable classes in app/Mcp/Tools, not controllers - without this
+     * entry a perfectly-covered HTTP surface could hide a completely
+     * unguarded MCP surface, since the scanner would never see it.
      */
     'scan_paths' => [
         app_path('Http/Controllers'),
+        app_path('Mcp/Tools'),
     ],
 
     /*
@@ -60,13 +70,22 @@ return [
      * authorisation, custom middleware, or other non-standard patterns the
      * static detector cannot infer automatically.
      *
-     * Example:
-     *   'custom_signals' => [
-     *       'App\\Services\\TeamAuthService::authorize',
-     *       'ensure.team.owner',
-     *   ],
+     * AuthorizesToolAccess::authorizeTool is the one consistent signal every
+     * MCP tool calls before touching a model; mcp.audit is the middleware
+     * that logs every tool call regardless of outcome.
      */
-    'custom_signals' => [],
+    'custom_signals' => [
+        'App\\Mcp\\Concerns\\AuthorizesToolAccess::authorizeTool',
+        'mcp.audit',
+
+        // ApiTokenController::destroy checks token ownership via a manual
+        // ID/type comparison (abort_unless($token->tokenable_id === ...)),
+        // not a $user->can() call, so the scanner's abort_unless detector
+        // does not recognise it automatically. index() and store() only
+        // ever touch auth()->user()->tokens(), so there is no per-instance
+        // authorisation to miss on those two either.
+        'App\\Http\\Controllers\\ApiTokenController::destroy',
+    ],
 
     /*
      * When true, a Form Request whose authorize() method contains only

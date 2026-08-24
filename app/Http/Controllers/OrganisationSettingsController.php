@@ -20,7 +20,11 @@ class OrganisationSettingsController extends Controller
         /** @var User $user */
         $user = auth()->user();
 
-        return view('settings.organisation', ['organisation' => $user->organisation()->firstOrFail()]);
+        $organisation = $user->organisation()->firstOrFail();
+
+        $this->authorize('view', $organisation);
+
+        return view('settings.organisation', ['organisation' => $organisation]);
     }
 
     /**
