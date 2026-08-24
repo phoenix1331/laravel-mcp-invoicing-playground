@@ -1,0 +1,26 @@
+version: 2
+
+updates:
+  - package-ecosystem: composer
+    directory: "/"
+    schedule:
+      interval: weekly
+    groups:
+      laravel:
+        patterns:
+          - laravel/*
+      dev-dependencies:
+        dependency-type: development
+
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+    groups:
+      dev-dependencies:
+        dependency-type: development
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly

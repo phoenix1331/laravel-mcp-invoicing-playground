@@ -13,9 +13,10 @@ function loginAsDuskUser(Browser $browser, string $email): void
         ->type('email', $email)
         ->type('password', 'password');
 
-    // A generous reload timeout: CI's chromedriver is slower than local dev,
-    // especially on the second/third login within the same browse() session.
-    $browser->waitForReload(fn (Browser $browser) => $browser->press('Log in'), 15)
+    // A generous reload timeout beyond even the raised global default (see
+    // DuskTestCase::prepare()): CI's chromedriver degrades further on the
+    // second/third login within the same browse() session.
+    $browser->waitForReload(fn (Browser $browser) => $browser->press('Log in'), 25)
         ->assertPathIs('/dashboard');
 }
 

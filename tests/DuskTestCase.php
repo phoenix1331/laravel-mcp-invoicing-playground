@@ -6,6 +6,7 @@ use Facebook\WebDriver\Chrome\ChromeOptions;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Illuminate\Support\Collection;
+use Laravel\Dusk\Browser;
 use Laravel\Dusk\TestCase as BaseTestCase;
 use PHPUnit\Framework\Attributes\BeforeClass;
 
@@ -20,6 +21,10 @@ abstract class DuskTestCase extends BaseTestCase
         if (! static::runningInSail()) {
             static::startChromeDriver(['--port=9515']);
         }
+
+        // CI's chromedriver is consistently slower than local Docker, especially
+        // for page reloads and Alpine reactivity ticks later in a browse() session.
+        Browser::$waitSeconds = 15;
     }
 
     /**
