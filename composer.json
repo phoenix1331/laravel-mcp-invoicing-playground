@@ -28,7 +28,9 @@
         "pestphp/pest": "^4.7",
         "pestphp/pest-plugin-laravel": "^4.1",
         "phoenix1331/laravel-auth-audit": "^2.0",
-        "phpunit/phpunit": "^12.5.12"
+        "phpunit/phpunit": "^12.5.12",
+        "roave/security-advisories": "dev-latest",
+        "vimeo/psalm": "^6.16"
     },
     "autoload": {
         "psr-4": {

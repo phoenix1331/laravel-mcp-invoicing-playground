@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<psalm
+    errorLevel="8"
+    resolveFromConfigFile="true"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns="https://getpsalm.org/schema/config"
+    xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd"
+>
+    <!--
+        Run with the taint analysis flag in CI (see the security-scan job).
+        Larastan already covers correctness and type safety at level 8
+        elsewhere, so this config exists purely for Psalm's taint tracking
+        (SQL injection, XSS, command injection, path traversal); unused code
+        detection is left off since that is not what this pass is for.
+    -->
+    <projectFiles>
+        <directory name="app" />
+        <ignoreFiles>
+            <directory name="vendor" />
+        </ignoreFiles>
+    </projectFiles>
+</psalm>

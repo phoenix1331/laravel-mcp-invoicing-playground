@@ -1,4 +1,4 @@
-.PHONY: help up down build shell migrate seed test logs fresh pint stan lint-js format-js validate artisan composer npm dusk dusk-setup dusk-headed ssl-cert dev storage-link capability-map docs-preview
+.PHONY: help up down build shell migrate seed test logs fresh pint stan lint-js format-js validate artisan composer npm dusk dusk-setup dusk-headed ssl-cert dev storage-link capability-map docs-preview psalm
 
 EXEC = docker compose exec -u $(shell id -u):$(shell id -g) -e HOME=/tmp app
 
@@ -49,6 +49,9 @@ pint: ## run pint --test
 
 stan: ## run larastan level 8
 	@$(EXEC) ./vendor/bin/phpstan analyse --memory-limit=512M
+
+psalm: ## run psalm taint analysis for sql injection, xss, command injection and path traversal
+	@$(EXEC) ./vendor/bin/psalm --taint-analysis
 
 lint-js: ## check js/css formatting with prettier
 	@$(EXEC) npm run lint
