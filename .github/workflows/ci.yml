@@ -202,3 +202,53 @@ jobs:
         with:
           name: dusk-console
           path: tests/Browser/console
+
+  docs:
+    name: build & deploy docs
+    runs-on: ubuntu-latest
+    needs: lint
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_sqlite
+          coverage: none
+
+      - name: cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+
+      - name: install composer dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: copy env
+        run: cp .env.example .env
+
+      - name: generate app key
+        run: php artisan key:generate
+
+      - name: generate capability map
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+        run: php artisan docs:capability-map
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+      - name: deploy to github pages
+        id: deployment
+        uses: actions/deploy-pages@v4
