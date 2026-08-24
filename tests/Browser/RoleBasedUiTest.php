@@ -11,20 +11,13 @@ function loginAsDuskUser(Browser $browser, string $email): void
     $browser->visit('/login')
         ->waitFor('input[name="email"]', 10);
 
-    // The field exists in the DOM as soon as waitFor resolves, but on a
-    // resource-constrained CI runner it can take a little longer to become
-    // genuinely interactive/focusable - type() can race ahead of that and
-    // silently type into nothing. A short pause here is cheap insurance.
-    $browser->pause(250)
-        ->type('email', $email)
-        ->type('password', 'password');
-
-    // Confirm the typed values actually landed before submitting. On a
-    // resource-constrained CI runner, sendKeys can race ahead of the input
-    // becoming interactive and silently drop characters - failing fast here
-    // with a clear message beats a confusing downstream login failure.
-    $browser->assertInputValue('email', $email)
-        ->assertInputValue('password', 'password');
+    // typeReliably() (registered in DuskTestCase::prepare()) polls the actual
+    // field value and retries the type until it lands, rather than a fixed
+    // pause() - a resource-constrained runner can leave a field present in
+    // the DOM but not yet interactive even after waitFor() resolves, and a
+    // guessed sleep length doesn't reliably outlast that.
+    $browser->typeReliably('email', $email)
+        ->typeReliably('password', 'password');
 
     // A generous reload timeout beyond even the raised global default (see
     // DuskTestCase::prepare()): CI's chromedriver degrades further on the

@@ -9,43 +9,27 @@ test('a member creates an invoice, sends it, marks it paid, and it becomes immut
         $browser->visit('/login')
             ->waitFor('input[name="email"]', 10);
 
-        // See RoleBasedUiTest's loginAsDuskUser() for why this pause exists:
-        // the field can be present in the DOM before it's genuinely
-        // interactive on a resource-constrained CI runner.
-        $browser->pause(250)
-            ->type('email', 'user2@email.com')
-            ->type('password', 'password');
-
-        // Confirm the typed values actually landed before submitting - see
-        // the equivalent assertion in RoleBasedUiTest's loginAsDuskUser().
-        $browser->assertInputValue('email', 'user2@email.com')
-            ->assertInputValue('password', 'password');
+        // See RoleBasedUiTest's loginAsDuskUser() for why typeReliably() is
+        // used here instead of type() - it polls the field's actual value
+        // and retries until it lands, rather than a fixed pause().
+        $browser->typeReliably('email', 'user2@email.com')
+            ->typeReliably('password', 'password');
 
         $browser->waitForReload(fn (Browser $browser) => $browser->press('Log in'), 25)
             ->assertPathIs('/dashboard');
 
         $browser->visit('/invoices/create')
             ->assertSee('New invoice')
-            ->waitFor('input[name="lines[0][description]"]', 10)
-            ->pause(250);
+            ->waitFor('input[name="lines[0][description]"]', 10);
 
         $browser->script([
             "document.querySelector('input[name=issue_date]').value = '2026-01-01'",
             "document.querySelector('input[name=due_date]').value = '2026-01-31'",
         ]);
 
-        $browser->type('lines[0][description]', 'Dusk lifecycle line')
-            ->clear('lines[0][quantity]')
-            ->type('lines[0][quantity]', '2')
-            ->clear('lines[0][unit_price]')
-            ->type('lines[0][unit_price]', '150');
-
-        // Confirm the typed values actually landed before waiting on the
-        // Alpine-computed total - a dropped keystroke on a slow runner would
-        // otherwise surface as a confusing "waited for text 360.00" timeout
-        // instead of pointing at the field that never got its value.
-        $browser->assertInputValue('lines[0][quantity]', '2')
-            ->assertInputValue('lines[0][unit_price]', '150');
+        $browser->typeReliably('lines[0][description]', 'Dusk lifecycle line')
+            ->typeReliably('lines[0][quantity]', '2')
+            ->typeReliably('lines[0][unit_price]', '150');
 
         $browser->waitForText('360.00', 5)
             ->press('Create invoice')

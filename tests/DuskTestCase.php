@@ -25,6 +25,27 @@ abstract class DuskTestCase extends BaseTestCase
         // CI's chromedriver is consistently slower than local Docker, especially
         // for page reloads and Alpine reactivity ticks later in a browse() session.
         Browser::$waitSeconds = 15;
+
+        // On a resource-constrained runner, sendKeys can fire before a field is
+        // genuinely interactive even after waitFor() resolves on its selector -
+        // the DOM node exists, but isn't accepting input yet. A fixed pause()
+        // before typing doesn't fix this reliably (still observed failing in
+        // CI); this macro instead polls the actual field value and retries the
+        // type until it lands, bounded by a real timeout instead of a guess.
+        Browser::macro('typeReliably', function (string $field, string $value, int $seconds = 10) {
+            /** @var Browser $this */
+            $this->waitUsing($seconds, 100, function () use ($field, $value) {
+                if ($this->inputValue($field) === $value) {
+                    return true;
+                }
+
+                $this->clear($field)->type($field, $value);
+
+                return $this->inputValue($field) === $value;
+            }, "Waited %s seconds for [{$field}] to accept the value [{$value}].");
+
+            return $this;
+        });
     }
 
     /**
