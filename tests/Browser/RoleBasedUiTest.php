@@ -13,6 +13,13 @@ function loginAsDuskUser(Browser $browser, string $email): void
         ->type('email', $email)
         ->type('password', 'password');
 
+    // Confirm the typed values actually landed before submitting. On a
+    // resource-constrained CI runner, sendKeys can race ahead of the input
+    // becoming interactive and silently drop characters - failing fast here
+    // with a clear message beats a confusing downstream login failure.
+    $browser->assertInputValue('email', $email)
+        ->assertInputValue('password', 'password');
+
     // A generous reload timeout beyond even the raised global default (see
     // DuskTestCase::prepare()): CI's chromedriver degrades further on the
     // second/third login within the same browse() session.

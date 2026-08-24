@@ -177,6 +177,17 @@ jobs:
       - name: migrate and seed
         run: php artisan migrate:fresh --seed --force
 
+      # Fortify's login route stacks two 5-per-minute rate limiters keyed by
+      # email + IP (the throttle:login route middleware, and Fortify's own
+      # EnsureLoginIsNotThrottled pipeline action). migrate:fresh resets the
+      # cache table, but this is a second guard against any leftover state,
+      # since Dusk logs into the same handful of seeded accounts repeatedly
+      # within a single run - without it a throttled login silently redirects
+      # back to /login instead of authenticating, surfacing as a confusing
+      # downstream timeout rather than a clear error.
+      - name: reset login throttle for seeded accounts
+        run: php artisan dusk:reset-login-throttle
+
       - name: cache chrome driver
         uses: actions/cache@v4
         with:

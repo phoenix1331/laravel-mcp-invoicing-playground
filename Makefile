@@ -71,10 +71,12 @@ composer: ## run any composer command, e.g. make composer cmd="require foo/bar"
 npm: ## run any npm command, e.g. make npm cmd="install foo"
 	@$(EXEC) npm $(cmd)
 
-dusk-setup: ## migrate + seed the dedicated laravel_dusk database
+dusk-setup: ## migrate + seed the dedicated laravel_dusk database, and clear the login throttle for the seeded accounts
 	@$(EXEC) sh -c "DB_DATABASE=laravel_dusk php artisan migrate:fresh --seed --force"
+	@$(EXEC) sh -c "DB_DATABASE=laravel_dusk php artisan dusk:reset-login-throttle"
 
-dusk: ## run the dusk browser suite against the running app container
+dusk: ## clear the login throttle for the seeded accounts, then run the dusk browser suite against the running app container
+	@$(EXEC) sh -c "DB_DATABASE=laravel_dusk php artisan dusk:reset-login-throttle"
 	@$(EXEC) php artisan dusk
 
 dusk-headed: ## run dusk from the host with a visible browser window (needs host php, google-chrome, WSLg/X11)

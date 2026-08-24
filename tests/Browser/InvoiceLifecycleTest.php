@@ -7,10 +7,16 @@ use Laravel\Dusk\Browser;
 test('a member creates an invoice, sends it, marks it paid, and it becomes immutable', function () {
     $this->browse(function (Browser $browser) {
         $browser->visit('/login')
+            ->waitFor('input[name="email"]', 10)
             ->type('email', 'user2@email.com')
             ->type('password', 'password');
 
-        $browser->waitForReload(fn (Browser $browser) => $browser->press('Log in'))
+        // Confirm the typed values actually landed before submitting - see
+        // the equivalent assertion in RoleBasedUiTest's loginAsDuskUser().
+        $browser->assertInputValue('email', 'user2@email.com')
+            ->assertInputValue('password', 'password');
+
+        $browser->waitForReload(fn (Browser $browser) => $browser->press('Log in'), 25)
             ->assertPathIs('/dashboard');
 
         $browser->visit('/invoices/create')
@@ -26,8 +32,16 @@ test('a member creates an invoice, sends it, marks it paid, and it becomes immut
             ->clear('lines[0][quantity]')
             ->type('lines[0][quantity]', '2')
             ->clear('lines[0][unit_price]')
-            ->type('lines[0][unit_price]', '150')
-            ->waitForText('360.00', 5)
+            ->type('lines[0][unit_price]', '150');
+
+        // Confirm the typed values actually landed before waiting on the
+        // Alpine-computed total - a dropped keystroke on a slow runner would
+        // otherwise surface as a confusing "waited for text 360.00" timeout
+        // instead of pointing at the field that never got its value.
+        $browser->assertInputValue('lines[0][quantity]', '2')
+            ->assertInputValue('lines[0][unit_price]', '150');
+
+        $browser->waitForText('360.00', 5)
             ->press('Create invoice')
             ->waitUntil('window.location.pathname.match(/^\\/invoices\\/\\d+\\/edit$/)', 10);
 
