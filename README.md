@@ -76,9 +76,9 @@ See the live version of this diagram, with a filterable tool catalogue and the f
 9. `make storage-link` - needed for organisation logo uploads to display
 10. `make npm cmd="run build"` - builds the CSS/JS bundle
 
-Open **http://localhost:8000/login** and sign in with one of the [demo accounts](#demo-accounts) below - if you see a styled login form rather than a blank or broken page, setup worked. `https://localhost:8443` is also available once you trust the local certificate (see below), needed for MCP clients that require HTTPS.
+Open **http://localhost:8000/login** and sign in with one of the [demo accounts](#demo-accounts) below - if you see a styled login form rather than a blank or broken page, setup worked.
 
-If `docker compose ps` doesn't show all three containers (`app`, `mysql`, `redis`) as healthy, check `make logs`; a common first-run cause is another process already using ports 8000, 8443, 3307 or 6379 on the host.
+If `docker compose ps` doesn't show all three containers (`app`, `mysql`, `redis`) as healthy, check `make logs`; a common first-run cause is another process already using ports 8000, 3307 or 6379 on the host.
 
 ### Demo accounts
 
@@ -110,58 +110,15 @@ All seeded users share the password `password`.
 
 **About `make dev`:** this project's Docker networking doesn't publish Vite's HMR port (5173) to the host, so a long-running `make dev` leaves the browser pointed at an unreachable Vite dev server - CSS/JS edits silently stop taking effect. Use `make dev` for a one-off foreground session if you want HMR-style iteration from inside the container, but for normal development, edit Blade/CSS/JS and run `make npm cmd="run build"` to refresh the static bundle.
 
-### Trusting the local HTTPS certificate
-
-FrankenPHP's Caddy generates a self-signed certificate for `https://localhost:8443`. Some MCP clients (Claude Desktop's remote connector wizard) require HTTPS, so trusting this certificate locally avoids browser/client warnings.
-
-1. Run `make ssl-cert` - extracts the local CA root certificate to `storage/frankenphp-local-ca.crt`.
-2. Trust it:
-
-**Windows** (PowerShell):
-```powershell
-Import-Certificate -FilePath storage/frankenphp-local-ca.crt -CertStoreLocation Cert:\CurrentUser\Root
-```
-Or from an elevated Command Prompt: `certutil -addstore -f "Root" storage\frankenphp-local-ca.crt`.
-
-Gotcha hit during testing: double-clicking the certificate and using the "Install Certificate..." wizard can silently place it in the *Intermediate Certification Authorities* store instead of *Trusted Root* if the store step is left on auto-select or misclicked - Chrome/Edge will still show "not private" in that case. Verify with:
-```powershell
-Get-ChildItem Cert:\CurrentUser\Root | Where-Object Subject -like '*Caddy*'
-```
-If it's missing there, check `Cert:\CurrentUser\CA` instead and re-import with the `Import-Certificate` command above, explicitly targeting `Cert:\CurrentUser\Root`. Fully quit the browser (check Task Manager, not just close the window) before retesting.
-
-**macOS:** open Keychain Access, drag `frankenphp-local-ca.crt` into the "login" or "System" keychain, double-click the imported certificate, expand *Trust*, and set "When using this certificate" to "Always Trust".
-
 ## Connecting an AI client
 
 Every connection method below is also generated live (with your own token, pre-filled) at **`/settings/mcp`** once you're logged in - that page is the source of truth; what follows is the same information for reference.
 
-### Claude Desktop (remote, Sanctum)
-
-Claude Desktop's config file only starts *local* (stdio) servers. A remote HTTP server like this one is added via **Settings → Connectors → Add custom connector** instead:
-
-- **Server URL:** `https://localhost:8443/mcp/invoicing`
-- **Authorization header:** `Bearer YOUR_TOKEN` - create a token first on `/settings/tokens`
-
-Because Claude Desktop connects from Anthropic's own cloud infrastructure, not from your machine, `https://localhost:8443` is only reachable if you tunnel it - see [Testing with ngrok](#testing-with-ngrok) below. Local-only testing is limited to inspecting the tool catalogue at `/settings/mcp`; a genuine end-to-end OAuth/connector test needs a public URL.
-
-### Claude Code / Cursor (remote, Sanctum)
-
-Both read `url`/`headers` directly from their MCP config file:
-
-```json
-{
-  "mcpServers": {
-    "invoicing": {
-      "url": "https://localhost:8443/mcp/invoicing",
-      "headers": { "Authorization": "Bearer YOUR_TOKEN_HERE" }
-    }
-  }
-}
-```
+Every *remote* connection (anything other than Claude Code's local/stdio transport) needs a public HTTPS URL, because a remote MCP client doesn't reach into your machine - it makes an outbound HTTPS request the same way a browser would. **ngrok is the one way this repo documents for that**, for every remote client, not just Claude Desktop; see [Exposing your local server with ngrok](#exposing-your-local-server-with-ngrok) below.
 
 ### Claude Code (local, stdio)
 
-No token needed - the server runs as you, inside this project's container:
+No tunnel and no token needed - the server runs as you, inside this project's container:
 
 ```json
 {
@@ -174,16 +131,41 @@ No token needed - the server runs as you, inside this project's container:
 }
 ```
 
-### Testing with ngrok
+### Claude Code / Cursor (remote, Sanctum)
 
-To let a genuinely remote client (Claude Desktop's connector wizard) reach your local server:
+Both read `url`/`headers` directly from their MCP config file. Set up ngrok first (below), then use the forwarding URL it prints:
+
+```json
+{
+  "mcpServers": {
+    "invoicing": {
+      "url": "https://xxxx.ngrok-free.dev/mcp/invoicing",
+      "headers": { "Authorization": "Bearer YOUR_TOKEN_HERE" }
+    }
+  }
+}
+```
+
+Create a token first on `/settings/tokens`.
+
+### Claude Desktop (remote, Sanctum)
+
+Claude Desktop's config file only starts *local* (stdio) servers. A remote HTTP server like this one is added via **Settings → Connectors → Add custom connector** instead, using the same ngrok URL:
+
+- **Server URL:** `https://xxxx.ngrok-free.dev/mcp/invoicing`
+- **Authorization header:** `Bearer YOUR_TOKEN` - create a token first on `/settings/tokens`
+
+Claude Desktop connects from Anthropic's own cloud infrastructure, not from your machine, so `http://localhost:8000` is never reachable for it under any circumstances - a tunnel is not optional here, unlike the other two clients above (which can reach `localhost` directly if you're only testing locally and don't need a real remote connection).
+
+### Exposing your local server with ngrok
 
 1. Install ngrok, then `ngrok config add-authtoken <token>` (a free account is enough).
-2. Run `ngrok http https://localhost:8443` - the full URL, not just the port; plain `ngrok http 8443` defaults to HTTP.
-3. Note the printed `Forwarding` HTTPS URL, e.g. `https://xxxx.ngrok-free.dev`.
-4. Set `NGROK_HOSTNAME=https://xxxx.ngrok-free.dev` in `.env`, then `make up` (or `docker compose up -d app`) to pick it up. `docker-compose.yml`'s `SERVER_NAME` reads this from the environment, so no committed file needs editing.
-5. Use the ngrok URL, not `localhost`, as the server URL in Claude Desktop's connector wizard: `https://xxxx.ngrok-free.dev/mcp/invoicing`.
-6. When you're done, remove `NGROK_HOSTNAME` from `.env` (or leave it blank) and re-run `make up` - the container reverts to serving `localhost` only.
+2. Run `ngrok http http://localhost:8000` - the full URL, not just the port.
+3. Note the printed `Forwarding` HTTPS URL, e.g. `https://xxxx.ngrok-free.dev`. ngrok terminates HTTPS at its own edge and forwards plain HTTP to your container, so this is the URL clients connect to.
+4. Set `NGROK_HOSTNAME=http://xxxx.ngrok-free.dev` in `.env` - **`http://`, not `https://`**, even though the ngrok URL itself is HTTPS. This only controls how Caddy inside the container matches the incoming Host header; an explicit `http://` scheme stops Caddy trying to obtain its own Let's Encrypt certificate for a hostname it can't complete an ACME challenge for through the tunnel. `https://` or no scheme here causes Caddy to retry that certificate request indefinitely in the background, which looks exactly like a hung server.
+5. `make up` (or `docker compose up -d app`) to pick up the change. `docker-compose.yml`'s `SERVER_NAME` reads this from the environment, so no committed file needs editing.
+6. Use the `https://xxxx.ngrok-free.dev` URL from step 3 (not `NGROK_HOSTNAME`'s value, and not `localhost`) in whichever client config above.
+7. When you're done, remove `NGROK_HOSTNAME` from `.env` (or leave it blank) and re-run `make up` - the container reverts to serving `localhost` only.
 
 The ngrok hostname changes on every restart on the free tier, so this is a repeatable manual procedure, not something to commit.
 

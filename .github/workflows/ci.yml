@@ -249,9 +249,16 @@ jobs:
 
   osv-scan:
     name: osv-scanner
+    # security-events: write is required here even though upload-sarif is off
+    # below - the called reusable workflow's own permissions block requests
+    # it unconditionally, and a caller can only downgrade what a reusable
+    # workflow requests, never grant it less than it asks for. Omitting this
+    # makes GitHub reject the whole run at startup (a startup_failure with
+    # zero jobs ever queued), not just fail this one job.
     permissions:
       contents: read
       actions: read
+      security-events: write
     # Reusable workflow, called at job level rather than as a step - it
     # auto-detects both composer.lock and package-lock.json from a single
     # recursive scan of the repo root. Pinned by tag rather than commit SHA -
