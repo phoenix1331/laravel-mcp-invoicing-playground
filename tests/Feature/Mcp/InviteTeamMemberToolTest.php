@@ -17,7 +17,7 @@ it('invites a new team member for owner', function () {
         'email' => 'new.member@acme.test',
         'role' => 'member',
     ])->assertOk()->assertStructuredContent(fn ($json) => $json
-        ->where('email', 'new.member@acme.test')
+        ->where('email', '<untrusted-data>new.member@acme.test</untrusted-data>')
         ->has('temporary_password')
         ->etc());
 

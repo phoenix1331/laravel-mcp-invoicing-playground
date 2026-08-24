@@ -251,4 +251,10 @@ jobs:
 
       - name: deploy to github pages
         id: deployment
+        continue-on-error: true
         uses: actions/deploy-pages@v4
+
+      - name: note if the deploy was skipped
+        if: steps.deployment.outcome == 'failure'
+        run: |
+          echo "::warning::GitHub Pages deploy failed - likely because the repository is private (Pages needs a paid plan on a private repo) or Pages has not been enabled yet under Settings > Pages > Source: GitHub Actions. The docs build itself succeeded."

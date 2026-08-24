@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use App\Enums\InvoiceStatus;
 use App\Enums\UserRole;
+use App\Mcp\Resources\CustomerResource;
+use App\Mcp\Resources\InvoiceResource;
 use App\Mcp\Servers\InvoicingServer;
 use App\Mcp\Tools\DeleteInvoiceTool;
 use App\Mcp\Tools\GetCustomer;
@@ -91,6 +93,40 @@ it('returns injected customer names delimited in the customer list', function (s
             ->where('name', "<untrusted-data>{$payload}</untrusted-data>")
             ->etc())
         ->etc());
+})->with('injectionPayloads');
+
+it('delimits an injected customer name in the invoice markdown resource', function (string $payload) {
+    $organisation = Organisation::factory()->create();
+    $user = User::factory()->create(['organisation_id' => $organisation->id, 'role' => UserRole::Owner]);
+    $customer = Customer::factory()->create(['organisation_id' => $organisation->id, 'name' => $payload]);
+    $invoice = Invoice::factory()->create(['organisation_id' => $organisation->id, 'customer_id' => $customer->id]);
+    InvoiceLine::factory()->for($invoice)->create();
+
+    InvoicingServer::actingAs($user)->resource(InvoiceResource::class, ['invoiceId' => (string) $invoice->id])
+        ->assertOk()
+        ->assertSee("<untrusted-data>{$payload}</untrusted-data>");
+})->with('injectionPayloads');
+
+it('delimits an injected line description in the invoice markdown resource', function (string $payload) {
+    $organisation = Organisation::factory()->create();
+    $user = User::factory()->create(['organisation_id' => $organisation->id, 'role' => UserRole::Owner]);
+    $customer = Customer::factory()->create(['organisation_id' => $organisation->id]);
+    $invoice = Invoice::factory()->create(['organisation_id' => $organisation->id, 'customer_id' => $customer->id]);
+    InvoiceLine::factory()->for($invoice)->create(['description' => $payload]);
+
+    InvoicingServer::actingAs($user)->resource(InvoiceResource::class, ['invoiceId' => (string) $invoice->id])
+        ->assertOk()
+        ->assertSee("<untrusted-data>{$payload}</untrusted-data>");
+})->with('injectionPayloads');
+
+it('delimits an injected name in the customer markdown resource', function (string $payload) {
+    $organisation = Organisation::factory()->create();
+    $user = User::factory()->create(['organisation_id' => $organisation->id, 'role' => UserRole::Owner]);
+    $customer = Customer::factory()->create(['organisation_id' => $organisation->id, 'name' => $payload]);
+
+    InvoicingServer::actingAs($user)->resource(CustomerResource::class, ['customerId' => (string) $customer->id])
+        ->assertOk()
+        ->assertSee("<untrusted-data>{$payload}</untrusted-data>");
 })->with('injectionPayloads');
 
 it('does not let an injected note grant a viewer write access', function () {

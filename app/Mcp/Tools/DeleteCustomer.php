@@ -7,6 +7,7 @@ namespace App\Mcp\Tools;
 use App\Mcp\Concerns\AuthorizesToolAccess;
 use App\Mcp\Concerns\IsWriteTool;
 use App\Mcp\Support\Idempotency;
+use App\Mcp\Support\UntrustedText;
 use App\Models\Customer;
 use App\Models\User;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
@@ -81,7 +82,7 @@ class DeleteCustomer extends Tool
 
         $customer->delete();
 
-        $summary = Response::text("Deleted customer {$name}.");
+        $summary = Response::text('Deleted customer '.UntrustedText::wrap($name).'.');
 
         return Response::make($summary)->withStructuredContent(['id' => $id]);
     }

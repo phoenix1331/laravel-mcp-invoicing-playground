@@ -16,7 +16,7 @@ it('gets the caller\'s organisation for every role', function (UserRole $role) {
         ->assertOk()
         ->assertStructuredContent(fn ($json) => $json
             ->where('id', $acme->id)
-            ->where('name', $acme->name)
+            ->where('name', "<untrusted-data>{$acme->name}</untrusted-data>")
             ->etc());
 })->with([UserRole::Owner, UserRole::Member, UserRole::Viewer]);
 

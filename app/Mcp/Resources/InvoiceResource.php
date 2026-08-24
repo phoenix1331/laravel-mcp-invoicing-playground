@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Mcp\Resources;
 
 use App\Mcp\Concerns\AuthorizesToolAccess;
+use App\Mcp\Support\UntrustedText;
 use App\Models\Invoice;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
@@ -43,17 +44,19 @@ class InvoiceResource extends Resource implements HasUriTemplate
 
         $lines = $invoice->lines->map(fn ($line): string => sprintf(
             '| %s | %s | %s | %s |',
-            $line->description,
+            UntrustedText::wrap($line->description),
             $line->quantity,
             $line->unit_price,
             $line->line_total,
         ))->implode("\n");
 
+        $customerName = UntrustedText::wrap($customer->name);
+
         return Response::text(<<<MARKDOWN
             # Invoice {$invoice->number}
 
             Status: {$invoice->status->value}
-            Customer: {$customer->name}
+            Customer: {$customerName}
             Issue date: {$invoice->issue_date->toDateString()}
             Due date: {$invoice->due_date->toDateString()}
 

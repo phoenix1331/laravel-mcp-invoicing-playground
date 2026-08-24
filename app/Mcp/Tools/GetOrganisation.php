@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Mcp\Tools;
 
 use App\Mcp\Concerns\AuthorizesToolAccess;
+use App\Mcp\Support\UntrustedText;
 use App\Models\User;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
@@ -55,13 +56,13 @@ class GetOrganisation extends Tool
 
         $data = [
             'id' => $organisation->id,
-            'name' => $organisation->name,
+            'name' => UntrustedText::wrap($organisation->name),
             'slug' => $organisation->slug,
-            'address' => $organisation->address,
-            'vat_number' => $organisation->vat_number,
+            'address' => UntrustedText::wrap($organisation->address),
+            'vat_number' => UntrustedText::wrap($organisation->vat_number),
         ];
 
-        $summary = Response::text("Organisation: {$organisation->name}.");
+        $summary = Response::text('Organisation: '.UntrustedText::wrap($organisation->name).'.');
 
         return Response::make($summary)->withStructuredContent($data);
     }

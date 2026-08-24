@@ -18,10 +18,23 @@ it('creates a customer for owner and member', function (UserRole $role) {
 
     InvoicingServer::actingAs($user)->tool(CreateCustomer::class, ['name' => 'New Co', 'email' => 'hello@newco.test'])
         ->assertOk()
-        ->assertStructuredContent(fn ($json) => $json->where('name', 'New Co')->etc());
+        ->assertStructuredContent(fn ($json) => $json->where('name', '<untrusted-data>New Co</untrusted-data>')->etc());
 
     expect(Customer::where('name', 'New Co')->where('organisation_id', $this->acme->id)->exists())->toBeTrue();
 })->with([UserRole::Owner, UserRole::Member]);
+
+it('never creates the customer in another organisation', function () {
+    $globex = Organisation::factory()->create();
+    $user = User::factory()->create(['organisation_id' => $this->acme->id, 'role' => UserRole::Owner]);
+
+    InvoicingServer::actingAs($user)->tool(CreateCustomer::class, ['name' => 'New Co'])
+        ->assertOk();
+
+    $customer = Customer::where('name', 'New Co')->sole();
+
+    expect($customer->organisation_id)->toBe($this->acme->id)
+        ->and($customer->organisation_id)->not->toBe($globex->id);
+});
 
 it('denies a viewer from creating a customer', function () {
     $user = User::factory()->create(['organisation_id' => $this->acme->id, 'role' => UserRole::Viewer]);

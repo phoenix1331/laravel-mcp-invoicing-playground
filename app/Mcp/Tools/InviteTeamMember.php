@@ -8,6 +8,7 @@ use App\Enums\UserRole;
 use App\Mcp\Concerns\AuthorizesToolAccess;
 use App\Mcp\Concerns\IsWriteTool;
 use App\Mcp\Support\Idempotency;
+use App\Mcp\Support\UntrustedText;
 use App\Models\User;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Support\Str;
@@ -81,11 +82,11 @@ class InviteTeamMember extends Tool
             'role' => $data['role'],
         ]);
 
-        $summary = Response::text("Added {$member->name} ({$member->email}) as {$member->role->value}. Relay the temporary password to them securely - it will not be shown again.");
+        $summary = Response::text('Added '.UntrustedText::wrap($member->name).' ('.UntrustedText::wrap($member->email).") as {$member->role->value}. Relay the temporary password to them securely - it will not be shown again.");
 
         return Response::make($summary)->withStructuredContent([
             'user_id' => $member->id,
-            'email' => $member->email,
+            'email' => UntrustedText::wrap($member->email),
             'temporary_password' => $temporaryPassword,
         ]);
     }

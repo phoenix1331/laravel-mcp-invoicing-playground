@@ -8,6 +8,7 @@ use App\Enums\UserRole;
 use App\Mcp\Concerns\AuthorizesToolAccess;
 use App\Mcp\Concerns\IsWriteTool;
 use App\Mcp\Support\Idempotency;
+use App\Mcp\Support\UntrustedText;
 use App\Models\User;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
@@ -77,7 +78,7 @@ class SetTeamMemberRole extends Tool
         $member->role = $data['role'];
         $member->save();
 
-        $summary = Response::text("Set {$member->name}'s role to {$member->role->value}.");
+        $summary = Response::text('Set '.UntrustedText::wrap($member->name)."'s role to {$member->role->value}.");
 
         return Response::make($summary)->withStructuredContent([
             'user_id' => $member->id,

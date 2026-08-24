@@ -20,7 +20,7 @@ it('updates a customer for owner and member', function (UserRole $role) {
     InvoicingServer::actingAs($user)->tool(UpdateCustomer::class, [
         'customer_id' => $this->customer->id,
         'name' => 'Renamed Co',
-    ])->assertOk()->assertStructuredContent(fn ($json) => $json->where('name', 'Renamed Co')->etc());
+    ])->assertOk()->assertStructuredContent(fn ($json) => $json->where('name', '<untrusted-data>Renamed Co</untrusted-data>')->etc());
 })->with([UserRole::Owner, UserRole::Member]);
 
 it('denies a viewer from updating a customer', function () {
@@ -62,9 +62,9 @@ it('replays the original result instead of updating again when the idempotency k
 
     InvoicingServer::actingAs($user)->tool(UpdateCustomer::class, $arguments)
         ->assertOk()
-        ->assertStructuredContent(fn ($json) => $json->where('name', 'Renamed Co')->etc());
+        ->assertStructuredContent(fn ($json) => $json->where('name', '<untrusted-data>Renamed Co</untrusted-data>')->etc());
 
     InvoicingServer::actingAs($user)->tool(UpdateCustomer::class, $arguments)
         ->assertOk()
-        ->assertStructuredContent(fn ($json) => $json->where('name', 'Renamed Co')->etc());
+        ->assertStructuredContent(fn ($json) => $json->where('name', '<untrusted-data>Renamed Co</untrusted-data>')->etc());
 });

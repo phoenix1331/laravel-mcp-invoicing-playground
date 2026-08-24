@@ -14,7 +14,7 @@ it('updates the organisation for owner', function () {
 
     InvoicingServer::actingAs($user)->tool(UpdateOrganisation::class, ['name' => 'Acme Renamed'])
         ->assertOk()
-        ->assertStructuredContent(fn ($json) => $json->where('name', 'Acme Renamed')->etc());
+        ->assertStructuredContent(fn ($json) => $json->where('name', '<untrusted-data>Acme Renamed</untrusted-data>')->etc());
 });
 
 it('denies member and viewer from updating the organisation', function (UserRole $role) {
@@ -57,9 +57,9 @@ it('replays the original result instead of updating again when the idempotency k
 
     InvoicingServer::actingAs($user)->tool(UpdateOrganisation::class, $arguments)
         ->assertOk()
-        ->assertStructuredContent(fn ($json) => $json->where('name', 'Acme Renamed')->etc());
+        ->assertStructuredContent(fn ($json) => $json->where('name', '<untrusted-data>Acme Renamed</untrusted-data>')->etc());
 
     InvoicingServer::actingAs($user)->tool(UpdateOrganisation::class, $arguments)
         ->assertOk()
-        ->assertStructuredContent(fn ($json) => $json->where('name', 'Acme Renamed')->etc());
+        ->assertStructuredContent(fn ($json) => $json->where('name', '<untrusted-data>Acme Renamed</untrusted-data>')->etc());
 });

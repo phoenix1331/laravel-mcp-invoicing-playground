@@ -7,6 +7,7 @@ namespace App\Mcp\Tools;
 use App\Mcp\Concerns\AuthorizesToolAccess;
 use App\Mcp\Concerns\IsWriteTool;
 use App\Mcp\Support\Idempotency;
+use App\Mcp\Support\UntrustedText;
 use App\Models\Organisation;
 use App\Models\User;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
@@ -78,11 +79,11 @@ class UpdateOrganisation extends Tool
     {
         $organisation->update(collect($data)->except('idempotency_key')->all());
 
-        $summary = Response::text("Updated organisation: {$organisation->name}.");
+        $summary = Response::text('Updated organisation: '.UntrustedText::wrap($organisation->name).'.');
 
         return Response::make($summary)->withStructuredContent([
             'id' => $organisation->id,
-            'name' => $organisation->name,
+            'name' => UntrustedText::wrap($organisation->name),
         ]);
     }
 }

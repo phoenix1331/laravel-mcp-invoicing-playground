@@ -6,6 +6,7 @@ namespace App\Mcp\Tools;
 
 use App\Enums\UserRole;
 use App\Mcp\Concerns\AuthorizesToolAccess;
+use App\Mcp\Support\UntrustedText;
 use App\Models\User;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
@@ -59,8 +60,8 @@ class ListTeam extends Tool
         $data = [
             'members' => $members->map(fn (User $member): array => [
                 'id' => $member->id,
-                'name' => $member->name,
-                'email' => $member->email,
+                'name' => UntrustedText::wrap($member->name),
+                'email' => UntrustedText::wrap($member->email),
                 'role' => $member->role->value,
             ])->all(),
         ];

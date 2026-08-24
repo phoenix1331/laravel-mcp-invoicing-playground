@@ -7,6 +7,7 @@ namespace App\Mcp\Tools;
 use App\Mcp\Concerns\AuthorizesToolAccess;
 use App\Mcp\Concerns\IsWriteTool;
 use App\Mcp\Support\Idempotency;
+use App\Mcp\Support\UntrustedText;
 use App\Models\Customer;
 use App\Models\User;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
@@ -75,11 +76,11 @@ class CreateCustomer extends Tool
             'organisation_id' => $user->organisation_id,
         ]);
 
-        $summary = Response::text("Created customer {$customer->name}.");
+        $summary = Response::text('Created customer '.UntrustedText::wrap($customer->name).'.');
 
         return Response::make($summary)->withStructuredContent([
             'id' => $customer->id,
-            'name' => $customer->name,
+            'name' => UntrustedText::wrap($customer->name),
         ]);
     }
 }

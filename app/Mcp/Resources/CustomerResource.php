@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Mcp\Resources;
 
 use App\Mcp\Concerns\AuthorizesToolAccess;
+use App\Mcp\Support\UntrustedText;
 use App\Models\Customer;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
@@ -54,11 +55,15 @@ class CustomerResource extends Resource implements HasUriTemplate
             ? $invoices
             : "| Number | Status | Issue date | Total |\n|---|---|---|---|\n{$invoices}";
 
-        return Response::text(<<<MARKDOWN
-            # {$customer->name}
+        $name = UntrustedText::wrap($customer->name);
+        $email = UntrustedText::wrap($customer->email);
+        $address = UntrustedText::wrap($customer->address);
 
-            Email: {$customer->email}
-            Address: {$customer->address}
+        return Response::text(<<<MARKDOWN
+            # {$name}
+
+            Email: {$email}
+            Address: {$address}
 
             ## Invoices
 
