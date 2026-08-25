@@ -111,6 +111,8 @@ Every connection method below is also generated live, with your own token pre-fi
 
 Claude Desktop connects from Anthropic's cloud, not your machine, so `localhost` is never reachable for it - a tunnel is required, not optional.
 
+**Known issue - "Ask every time" tool permissions:** if Claude Desktop's connector permission is set to ask before every call rather than always allow, the approval dialog can time out waiting for a click and the call comes back reported as denied instead of timed out. The server never receives the request in this case - confirmed via `/audit/mcp`, which shows nothing logged for the failed attempt - so this is a Claude Desktop client-side issue, not something wrong with the tunnel or the app. Every layer on the server side (Caddy, Laravel, the OAuth token check) responds in ~150-200ms regardless of how long the connection has been idle, both warm and cold. Workaround: set the connector's tool permissions to always allow for read tools.
+
 ### exposing your local server with a tunnel
 
 This repo uses [cloudflared](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/) rather than ngrok - ngrok's free tier serves an interstitial "you are about to visit..." warning page to real browser navigation (not just API calls), which silently breaks the OAuth login redirect Claude Desktop's connector wizard depends on. cloudflared's quick tunnels don't have this problem and need no account.
