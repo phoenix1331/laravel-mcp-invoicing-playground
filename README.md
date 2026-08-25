@@ -104,10 +104,13 @@ Every connection method below is also generated live, with your own token pre-fi
 }
 ```
 
-**Claude Desktop (remote)** - added via **Settings → Connectors → Add custom connector**, not the config file, since Desktop only starts local servers from `claude_desktop_config.json`:
+**Claude Desktop (remote)** - added via **Settings → Connectors → Add custom connector**, not the config file, since Desktop only starts local servers from `claude_desktop_config.json`. Unlike the two clients above, there's no bearer token to copy in manually - Desktop authenticates via the full OAuth 2.1 flow instead:
 
 - Server URL: `https://xxxx.trycloudflare.com/mcp/invoicing`
-- Authorization header: `Bearer YOUR_TOKEN`
+
+That's the only field needed. On **Add**, Desktop discovers the OAuth endpoints from `/.well-known/oauth-authorization-server`, registers itself as a client via `/oauth/register` (dynamic client registration, no manual client ID/secret), then opens the authorization screen below for you to log in and approve access:
+
+![OAuth consent screen, showing Claude Desktop's connector requesting authorization](docs/images/oauth-consent.png)
 
 Claude Desktop connects from Anthropic's cloud, not your machine, so `localhost` is never reachable for it - a tunnel is required, not optional.
 
