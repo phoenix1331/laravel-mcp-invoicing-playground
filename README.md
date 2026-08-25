@@ -110,7 +110,7 @@ Every connection method below is also generated live, with your own token pre-fi
 
 That's the only field needed. On **Add**, Desktop discovers the OAuth endpoints from `/.well-known/oauth-authorization-server`, registers itself as a client via `/oauth/register` (dynamic client registration, no manual client ID/secret), then opens the authorization screen below for you to log in and approve access:
 
-![OAuth consent screen, showing Claude Desktop's connector requesting authorization](docs/images/oauth-consent.png)
+<img width="3138" height="1624" alt="Screenshot 2026-08-25 154017" src="https://github.com/user-attachments/assets/c535513f-fd25-4371-b19c-4e52cca889ae" />
 
 Claude Desktop connects from Anthropic's cloud, not your machine, so `localhost` is never reachable for it - a tunnel is required, not optional.
 
