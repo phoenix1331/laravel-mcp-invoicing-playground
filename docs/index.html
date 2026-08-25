@@ -455,6 +455,14 @@ th {
     font-size: 0.85rem;
     text-align: center;
     padding: 1.5rem;
+    overflow: hidden;
+}
+
+.coverage-placeholder img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: var(--radius-card);
 }
 
 .badge-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem; }
@@ -546,6 +554,13 @@ th {
     font-size: 0.8rem;
     text-align: center;
     padding: 1rem;
+}
+
+.browser-frame img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
 }
 
 /* footer */
@@ -835,7 +850,7 @@ footer.site-footer {
         </p>
         <div class="coverage-wrap">
             <div class="card coverage-placeholder">
-                Auth-audit HTML report screenshot, added once the report is generated.
+                <img src="images/auth-audit-report.png" alt="Auth-audit HTML report showing 100% coverage across HTTP and MCP routes">
             </div>
             <div>
                 <p>The audit runs in CI on every push, covering both surfaces, with the full HTML report published as a build artifact.</p>
@@ -902,19 +917,19 @@ make seed</pre>
         <div class="screenshot-grid">
             <figure class="browser-frame" style="margin: 0;">
                 <div class="bar"><span></span><span></span><span></span></div>
-                <div class="shot-placeholder">Dashboard screenshot, added once captured</div>
+                <img src="images/dashboard.png" alt="Dashboard screenshot">
             </figure>
             <figure class="browser-frame" style="margin: 0;">
                 <div class="bar"><span></span><span></span><span></span></div>
-                <div class="shot-placeholder">Invoice editor screenshot, added once captured</div>
+                <img src="images/invoice-editor.png" alt="Invoice editor screenshot">
             </figure>
             <figure class="browser-frame" style="margin: 0;">
                 <div class="bar"><span></span><span></span><span></span></div>
-                <div class="shot-placeholder">MCP console screenshot, added once captured</div>
+                <img src="images/mcp-console.png" alt="MCP console screenshot">
             </figure>
             <figure class="browser-frame" style="margin: 0;">
                 <div class="bar"><span></span><span></span><span></span></div>
-                <div class="shot-placeholder">Rendered invoice PDF screenshot, added once captured</div>
+                <img src="images/invoice-pdf.png" alt="Rendered invoice PDF screenshot">
             </figure>
         </div>
     </div>
