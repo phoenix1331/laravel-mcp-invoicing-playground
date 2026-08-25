@@ -116,7 +116,22 @@ jobs:
       - name: generate passport keys
         run: php artisan passport:keys
 
+      # Without a real Chrome binary, Browsershot (used for invoice PDF
+      # generation) falls back to Puppeteer's own bundled Chromium, which
+      # intermittently times out launching on the GitHub-hosted runner -
+      # the exact same class of flakiness documented for Dusk below, just
+      # hitting PDF tests instead of browser tests. Pinning a real Chrome
+      # build the same way fixes it the same way.
+      - name: install pinned chrome
+        id: setup-chrome
+        uses: browser-actions/setup-chrome@v2
+        with:
+          chrome-version: '152.0.7977.54'
+          install-dependencies: true
+
       - name: run pest
+        env:
+          LARAVEL_PDF_CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
         run: ./vendor/bin/pest
 
   # e2e (dusk) is disabled for now, not just non-blocking - continue-on-error
