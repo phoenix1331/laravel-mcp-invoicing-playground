@@ -116,7 +116,8 @@ Claude Desktop connects from Anthropic's cloud, not your machine, so `localhost`
 
 Once connected, Claude can call any tool in the catalogue directly from the conversation - for example, asking it to fetch your latest invoices:
 
-![Claude Desktop retrieving a list of invoices via the invoices.list MCP tool](docs/images/claude-desktop-invoices.png)
+<img width="3146" height="1808" alt="Screenshot 2026-08-25 155500" src="https://github.com/user-attachments/assets/89968a4f-bb3c-44f2-bdb7-ce5d599af222" />
+
 
 **Known issue - "Ask every time" tool permissions:** if Claude Desktop's connector permission is set to ask before every call rather than always allow, the approval dialog can time out waiting for a click and the call comes back reported as denied instead of timed out. The server never receives the request in this case - confirmed via `/audit/mcp`, which shows nothing logged for the failed attempt - so this is a Claude Desktop client-side issue, not something wrong with the tunnel or the app. Every layer on the server side (Caddy, Laravel, the OAuth token check) responds in ~150-200ms regardless of how long the connection has been idle, both warm and cold. Workaround: set the connector's tool permissions to always allow for read tools.
 
