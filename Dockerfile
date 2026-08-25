@@ -31,4 +31,4 @@ COPY --chown=app:app . /app
 
 USER app
 
-ENV SERVER_NAME="http://localhost:8000"
+ENV SERVER_NAME="http://localhost:8000, https://localhost:443"
