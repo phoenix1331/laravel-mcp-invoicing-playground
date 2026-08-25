@@ -165,6 +165,8 @@ The same data renders as a live parity matrix on `/settings/mcp` - add a route w
 
 ## auth coverage
 
+<img width="3162" height="1666" alt="auth-audit-report" src="https://github.com/user-attachments/assets/19a5011a-542e-41c0-9506-58a39c7f9cbd" />
+
 [`phoenix1331/laravel-auth-audit`](https://github.com/phoenix1331/laravel-auth-audit) scans routes for authorisation signals and reports what percentage are provably guarded. This repo extends the scan to `app/Mcp/Tools`, so one command covers both surfaces:
 
 ```bash
