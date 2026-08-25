@@ -385,6 +385,9 @@ jobs:
           DB_DATABASE: ':memory:'
         run: php artisan docs:capability-map
 
+      - name: disable jekyll processing
+        run: touch docs/.nojekyll
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: docs
