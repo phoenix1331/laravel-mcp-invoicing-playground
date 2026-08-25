@@ -888,10 +888,11 @@ make seed</pre>
 
             <div class="tab-panel" id="panel-desktop" role="tabpanel" aria-labelledby="tab-desktop">
                 <button class="copy-btn" type="button" data-copy-target="code-desktop">Copy</button>
-                <pre id="code-desktop">1. Trust the local HTTPS certificate (make ssl-cert, see README)
-2. Claude Desktop -> Settings -> Connectors -> Add custom connector
-3. Server URL: https://localhost:8443/mcp/invoicing
-4. Approve the OAuth consent screen when prompted</pre>
+                <pre id="code-desktop">1. cloudflared tunnel --url http://localhost:8000
+2. Set TUNNEL_HOSTNAME=http://xxxx.trycloudflare.com:8000 in .env, then make up
+3. Claude Desktop -> Settings -> Connectors -> Add custom connector
+4. Server URL: https://xxxx.trycloudflare.com/mcp/invoicing
+5. Approve the OAuth consent screen when prompted</pre>
             </div>
 
             <div class="tab-panel" id="panel-code" role="tabpanel" aria-labelledby="tab-code">

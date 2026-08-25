@@ -16,6 +16,13 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'mcp.audit' => AuditMcpCalls::class,
         ]);
+
+        // Trusts X-Forwarded-* from any proxy, needed so URL generation picks
+        // up "https" from the tunnel's X-Forwarded-Proto rather than falling
+        // back to the plain-HTTP scheme Caddy actually serves on inside the
+        // container - without this, OAuth redirects come back as http://
+        // and Claude Desktop refuses to follow the downgrade.
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

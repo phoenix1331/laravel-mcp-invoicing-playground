@@ -41,9 +41,9 @@ make storage-link
 make npm cmd="run build"
 ```
 
-Open **http://localhost:8000/login** and sign in with one of the accounts below. `https://localhost:8443` is also available once you trust the local certificate (see below), needed for MCP clients that require HTTPS.
+Open **http://localhost:8000/login** and sign in with one of the accounts below.
 
-If `docker compose ps` doesn't show `app` and `mysql` as healthy, check `make logs` - the usual cause is another process already using port 8000, 8443 or 3307.
+If `docker compose ps` doesn't show `app` and `mysql` as healthy, check `make logs` - the usual cause is another process already using port 8000 or 3307.
 
 ### demo accounts
 
@@ -74,27 +74,6 @@ All seeded users share the password `password`.
 
 **Note on `make dev`:** Vite's HMR port isn't published to the host, so leaving `make dev` running in the background silently breaks CSS/JS reloading. Use it for a one-off foreground session, otherwise just run `make npm cmd="run build"` after editing Blade/CSS/JS.
 
-### trusting the local HTTPS certificate
-
-FrankenPHP's Caddy generates a self-signed certificate for `https://localhost:8443`. Claude Desktop's remote connector wizard requires HTTPS, so trusting this certificate locally avoids browser/client warnings.
-
-1. Run `make ssl-cert` - extracts the local CA root certificate to `storage/frankenphp-local-ca.crt`.
-2. Trust it:
-
-**Windows** (PowerShell):
-```powershell
-Import-Certificate -FilePath storage/frankenphp-local-ca.crt -CertStoreLocation Cert:\CurrentUser\Root
-```
-Or from an elevated Command Prompt: `certutil -addstore -f "Root" storage\frankenphp-local-ca.crt`.
-
-Gotcha hit during testing: double-clicking the certificate and using the "Install Certificate..." wizard can silently place it in the *Intermediate Certification Authorities* store instead of *Trusted Root* if the store step is left on auto-select or misclicked - Chrome/Edge will still show "not private" in that case. Verify with:
-```powershell
-Get-ChildItem Cert:\CurrentUser\Root | Where-Object Subject -like '*Caddy*'
-```
-If it's missing there, check `Cert:\CurrentUser\CA` instead and re-import with the `Import-Certificate` command above, explicitly targeting `Cert:\CurrentUser\Root`. Fully quit the browser (check Task Manager, not just close the window) before retesting.
-
-**macOS:** open Keychain Access, drag `frankenphp-local-ca.crt` into the "login" or "System" keychain, double-click the imported certificate, expand *Trust*, and set "When using this certificate" to "Always Trust".
-
 ## connecting an AI client
 
 Every connection method below is also generated live, with your own token pre-filled, at **`/settings/mcp`** once you're logged in.
@@ -112,38 +91,38 @@ Every connection method below is also generated live, with your own token pre-fi
 }
 ```
 
-**Claude Code / Cursor (remote)** - reads `url`/`headers` directly from the client's MCP config:
+**Claude Code / Cursor (remote)** - reads `url`/`headers` directly from the client's MCP config. Needs a tunnel (below) plus a token from `/settings/tokens`:
 
 ```json
 {
   "mcpServers": {
     "invoicing": {
-      "url": "https://localhost:8443/mcp/invoicing",
+      "url": "https://xxxx.trycloudflare.com/mcp/invoicing",
       "headers": { "Authorization": "Bearer YOUR_TOKEN_HERE" }
     }
   }
 }
 ```
 
-Create a token first on `/settings/tokens`.
-
 **Claude Desktop (remote)** - added via **Settings → Connectors → Add custom connector**, not the config file, since Desktop only starts local servers from `claude_desktop_config.json`:
 
-- Server URL: `https://localhost:8443/mcp/invoicing`
+- Server URL: `https://xxxx.trycloudflare.com/mcp/invoicing`
 - Authorization header: `Bearer YOUR_TOKEN`
 
-Because Claude Desktop connects from Anthropic's own cloud infrastructure, not from your machine, `https://localhost:8443` is only reachable if you tunnel it - see below. Local-only testing is limited to inspecting the tool catalogue at `/settings/mcp`; a genuine end-to-end OAuth/connector test needs a public URL.
+Claude Desktop connects from Anthropic's cloud, not your machine, so `localhost` is never reachable for it - a tunnel is required, not optional.
 
-### exposing your local server with ngrok
+### exposing your local server with a tunnel
 
-1. Install ngrok, then `ngrok config add-authtoken <token>` (free account is fine).
-2. Run `ngrok http https://localhost:8443` - the full URL, not just the port; plain `ngrok http 8443` defaults to HTTP.
-3. Note the printed `Forwarding` HTTPS URL, e.g. `https://xxxx.ngrok-free.dev`.
-4. Set `NGROK_HOSTNAME=https://xxxx.ngrok-free.dev` in `.env`, then `make up` (or `docker compose up -d app`) to pick it up. `docker-compose.yml`'s `SERVER_NAME` reads this from the environment, so no committed file needs editing.
-5. Use the ngrok URL, not `localhost`, as the server URL in Claude Desktop's connector wizard: `https://xxxx.ngrok-free.dev/mcp/invoicing`.
-6. When you're done, remove `NGROK_HOSTNAME` from `.env` (or leave it blank) and re-run `make up` - the container reverts to serving `localhost` only.
+This repo uses [cloudflared](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/) rather than ngrok - ngrok's free tier serves an interstitial "you are about to visit..." warning page to real browser navigation (not just API calls), which silently breaks the OAuth login redirect Claude Desktop's connector wizard depends on. cloudflared's quick tunnels don't have this problem and need no account.
 
-The ngrok hostname changes every restart on the free tier, so this is a repeatable manual step, not something to commit.
+1. Install `cloudflared`.
+2. `cloudflared tunnel --url http://localhost:8000` - prints a `https://xxxx.trycloudflare.com` forwarding URL after a few seconds.
+3. Set `TUNNEL_HOSTNAME=http://xxxx.trycloudflare.com:8000` in `.env` - **`http://`, not `https://`**, even though the forwarding URL itself is HTTPS. This only tells Caddy inside the container which Host header to match; using `https://` here makes Caddy try to fetch its own Let's Encrypt certificate for a hostname it can't complete an ACME challenge for, which hangs silently in the background. The `:8000` is required too - a bare hostname defaults to Caddy's standard port 80, which nothing listens on, so Caddy silently routes it to an unreachable listener instead of alongside `localhost:8000` and every request comes back an empty 200.
+4. `make up` to pick up the change - no committed file needs editing, `docker-compose.yml` reads `TUNNEL_HOSTNAME` from the environment.
+5. Use the `https://` forwarding URL from step 2 in whichever client config above.
+6. When you're done, remove `TUNNEL_HOSTNAME` from `.env` and re-run `make up`.
+
+The tunnel hostname changes every restart on a quick tunnel, so this is a repeatable manual step, not something to commit.
 
 ## the MCP server
 
